@@ -1,4 +1,4 @@
-# Adult Content Platform
+# Adult Content Platform (SoplaX)
 
 A lightweight adult content platform built with **Django** and styled using **Bootstrap**.  
 The platform delivers videos hosted on **AWS S3** and integrates **ExoClick** for advertising and monetization.  
