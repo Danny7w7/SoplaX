@@ -24,9 +24,47 @@ class RegistroPendiente(models.Model):
     expires_at = models.DateTimeField(db_index=True)
 
 
+class ElementoCatalogo(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        abstract = True
+        ordering = ["nombre"]
+
+    def __str__(self):
+        return self.nombre
+
+
+class Categoria(ElementoCatalogo):
+    class Meta(ElementoCatalogo.Meta):
+        verbose_name = "categoría"
+        verbose_name_plural = "categorías"
+
+
+class Actor(ElementoCatalogo):
+    class Meta(ElementoCatalogo.Meta):
+        verbose_name_plural = "actores"
+
+
+class Idioma(ElementoCatalogo):
+    pass
+
+
+class Postura(ElementoCatalogo):
+    pass
+
+
 class Videos(models.Model):
     nombre = models.CharField(max_length=100, null=False)
     descripcion = models.CharField(max_length=1000, null=False)
     miniatura = models.FileField(upload_to='upload/photos')
     video = models.FileField(upload_to='upload/videos')
     visitas = models.IntegerField()
+    categorias = models.ManyToManyField(Categoria, blank=True, related_name="videos", verbose_name="categorías")
+    actores = models.ManyToManyField(Actor, blank=True, related_name="videos")
+    idioma = models.ForeignKey(Idioma, on_delete=models.SET_NULL, null=True, blank=True, related_name="videos")
+    posturas = models.ManyToManyField(Postura, blank=True, related_name="videos")
+
+    class Meta:
+        verbose_name = "video"
+        verbose_name_plural = "videos"

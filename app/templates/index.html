@@ -15,59 +15,56 @@
 
 </head>
 <body style="background-color: #171717;">
-  <header>
-    <div class="container-fluid">
-      <div style="background-color: #1A237E;" class="row pb-1">
-        <div class="col-3 col-md-1 mt-">
-          <a href="{% url 'home' %}">
-            <img class="mt-2" src="{% static 'images/logo.png' %}" style="margin-left: 10%;" width="100%" alt="XXX">
-          </a>
+  <header class="catalog-header">
+    <div class="catalog-header-inner">
+      <a class="catalog-brand" href="{% url 'home' %}">
+        <img src="{% static 'images/logo.png' %}" alt="SoplaX">
+      </a>
+      <form class="catalog-search" method="get" action="{% url 'home' %}" role="search" id="buscar">
+        <span class="catalog-search-icon" aria-hidden="true"></span>
+        <input type="search" name="search" value="{{ query }}" aria-label="Buscar por título"
+               placeholder="Buscar por título…" maxlength="100">
+        {% if query %}
+        <a class="catalog-search-clear" href="{% url 'home' %}" aria-label="Limpiar búsqueda">
+          <span aria-hidden="true">×</span>
+        </a>
+        {% endif %}
+        <button type="submit">Buscar</button>
+      </form>
+      <div class="catalog-account">
+        {% if request.user.is_authenticated %}
+        <div class="dropdown">
+          <button class="catalog-account-button dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                  aria-expanded="false">
+            <span>{{ user.get_short_name|default:user.username }}</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            {% if user.is_staff %}
+            <li><a class="dropdown-item" href="{% url 'admin:index' %}">Menú administrador</a></li>
+            {% endif %}
+            <li>
+              <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button class="dropdown-item" type="submit">Cerrar sesión</button>
+              </form>
+            </li>
+          </ul>
         </div>
-        <div class="d-none d-md-block col-md-6"></div>
-        <div class="col-5 col-md-3">
-          <div class="input mt-2 ps-2 pt-1">
-            <form method="get" action="{% url 'home' %}" id="buscar">
-              <img width="25" class="pb-1 pb-md-0" src="https://cdn-icons-png.flaticon.com/512/64/64673.png">
-              <input type="search" class="outlinenone" placeholder="Buscar" name="search" value="{{ query }}" list="options">
-              <datalist id="options">
-                {% for result in autocomplete %}
-                <option value="{{ result }}">
-                {% endfor %}
-              </datalist>
-            </form>
-          </div>
-        </div>
-        <div class="col-2 col-md-2 mt-1">
-          {% if request.user.is_authenticated %}
-          <div class="dropdown mt-1">
-            <button class="btn button dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: white; 
-            font-weight: bold;">
-              {{ user.get_short_name|default:user.username }}
-            </button>
-            <ul class="dropdown-menu">
-              <!-- Usuario admin -->
-              {% if user.is_staff %}
-              <li><a class="dropdown-item" href="{% url 'admin:index' %}">Menu administrador</a></li>
-              {% endif %}
-              <li>
-                <form method="post" action="{% url 'logout' %}">
-                  {% csrf_token %}
-                  <button class="dropdown-item" type="submit">Cerrar sesi&#243;n</button>
-                </form>
-              </li>
-            </ul>
-          </div>
-          {% else %}
-          <div class="pt-2">
-            <a class="button" style="color: white; font-weight: bold;" href="{% url 'login' %}">¡Logueate!</a>
-          </div>
-          {% endif %}
-        </div>
+        {% else %}
+        <a class="catalog-account-button" href="{% url 'login' %}">Iniciar sesión</a>
+        {% endif %}
       </div>
+    </div>
   </header>
   {% block body %} 
-  <main>
-    <div class="row pt-3 ms-5 me-5 text-center">
+  <main class="video-catalog">
+    {% if query %}
+    <div class="catalog-results">
+      <h1>Resultados para <span>«{{ query }}»</span></h1>
+      <p>{{ page.paginator.count }} video{{ page.paginator.count|pluralize }}</p>
+    </div>
+    {% endif %}
+    <div class="row gy-3 text-center">
       {% static 'images/miniaturatemporal.png' as default_thumbnail %}
       {% for video in videos %}
       <div class="col-md-3">
@@ -80,11 +77,18 @@
         </a>
       </div>
       {% empty %}
-      <p>No se encontraron videos.</p>
+      <div class="col">
+        <div class="catalog-empty">
+          <p class="catalog-empty-title">No se encontraron videos.</p>
+          {% if query %}
+          <p>Prueba con otra palabra o con una parte del título.</p>
+          {% endif %}
+        </div>
+      </div>
       {% endfor %}
     </div>
     {% if page.has_other_pages %}
-    <nav class="d-flex justify-content-center align-items-center gap-3 py-4" aria-label="P&#225;ginas de videos">
+    <nav class="catalog-pagination d-flex justify-content-center align-items-center gap-3 pt-3" aria-label="Páginas de videos">
       {% if page.has_previous %}
         <a href="?search={{ query|urlencode }}&amp;page={{ page.previous_page_number }}">Anterior</a>
       {% endif %}

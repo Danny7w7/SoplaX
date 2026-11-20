@@ -15,7 +15,7 @@ from django.test import Client, TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import RegistroPendiente, Usuario, Videos
+from .models import Actor, Categoria, Idioma, Postura, RegistroPendiente, Usuario, Videos
 
 
 PASSWORD = "a-correct-passphrase-42"
@@ -229,6 +229,23 @@ class AccountTests(TestCase):
 
 
 class CatalogSecurityTests(TestCase):
+    def test_catalog_search_finds_partial_titles_in_any_order(self):
+        titles = [f"Otro video {number}" for number in range(24)] + [
+            "Excursión por el RÍO azul",
+            "Excursión por el bosque",
+            "El Ri\N{COMBINING ACUTE ACCENT}o azul en invierno",
+        ]
+        Videos.objects.bulk_create([Videos(nombre=title, visitas=0) for title in titles])
+
+        for query, expected in (
+            ("  RIO   excurs  ", [titles[24]]),
+            ("río", [titles[24], titles[26]]),
+            ("río inexistente", []),
+        ):
+            with self.subTest(query=query):
+                response = self.client.get(reverse("home"), {"search": query})
+                self.assertQuerySetEqual(response.context["videos"].values_list("nombre", flat=True), expected)
+
     def test_catalog_search_and_native_playback(self):
         video = Videos.objects.create(
             nombre="Prueba de catálogo",
@@ -256,9 +273,56 @@ class CatalogSecurityTests(TestCase):
         self.assertEqual(self.client.get(reverse("play", args=[video.pk + 1])).status_code, 404)
 
 
+class CatalogMetadataTests(TestCase):
+    def test_video_editor_can_assign_catalog_entries(self):
+        editor = Usuario.objects.create_user(username="editor", is_staff=True)
+        editor.user_permissions.add(Permission.objects.get(content_type__app_label="app", codename="change_videos"))
+        self.client.force_login(editor)
+
+        video = Videos.objects.create(
+            nombre="Video existente",
+            descripcion="Descripción de prueba",
+            miniatura="upload/photos/sample.png",
+            video="upload/videos/sample.mp4",
+            visitas=0,
+        )
+        categories = [Categoria.objects.create(nombre=name) for name in ("Categoría A", "Categoría B")]
+        actors = [Actor.objects.create(nombre=name) for name in ("Intérprete A", "Intérprete B")]
+        positions = [Postura.objects.create(nombre=name) for name in ("Postura A", "Postura B")]
+        language = Idioma.objects.create(nombre="Español")
+
+        response = self.client.post(
+            reverse("admin:app_videos_change", args=[video.pk]),
+            {
+                "nombre": video.nombre,
+                "descripcion": video.descripcion,
+                "visitas": video.visitas,
+                "categorias": [category.pk for category in categories],
+                "actores": [actor.pk for actor in actors],
+                "posturas": [position.pk for position in positions],
+                "idioma": language.pk,
+                "_save": "Save",
+            },
+        )
+        self.assertRedirects(response, reverse("admin:app_videos_changelist"))
+        video.refresh_from_db()
+        self.assertCountEqual(video.categorias.all(), categories)
+        self.assertCountEqual(video.actores.all(), actors)
+        self.assertCountEqual(video.posturas.all(), positions)
+        self.assertEqual(video.idioma, language)
+
+        search = self.client.get(reverse("admin:app_videos_changelist"), {"q": actors[1].nombre})
+        self.assertQuerySetEqual(search.context["cl"].result_list, [video])
+
+        language.delete()
+        video.refresh_from_db()
+        self.assertIsNone(video.idioma_id)
+        self.assertEqual(video.video.name, "upload/videos/sample.mp4")
+
+
 class LegacyMigrationTests(TransactionTestCase):
     initial = ("app", "0001_initial")
-    latest = ("app", "0006_registro_pendiente")
+    latest = ("app", "0007_clasificacion_video")
 
     def setUp(self):
         executor = MigrationExecutor(connection)
@@ -288,7 +352,13 @@ class LegacyMigrationTests(TransactionTestCase):
         self.assertEqual(user.email, "historic@example.net")
         self.assertEqual(user.password, "historical-hash")
         self.assertFalse(user.is_active)
-        self.assertEqual(Videos.objects.get(pk=old_video.pk).video.name, "upload/videos/legacy.mp4")
+        video = Videos.objects.get(pk=old_video.pk)
+        self.assertEqual(video.video.name, "upload/videos/legacy.mp4")
+        self.assertEqual(video.miniatura.name, "upload/photos/legacy.png")
+        self.assertIsNone(video.idioma_id)
+        self.assertFalse(video.categorias.exists())
+        self.assertFalse(video.actores.exists())
+        self.assertFalse(video.posturas.exists())
         self.assertNotIn("temp_password", [field.name for field in Usuario._meta.fields])
 
     def test_colliding_emails_stop_migration_without_reassigning_accounts(self):

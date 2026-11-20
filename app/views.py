@@ -6,7 +6,8 @@ from django.contrib.auth import login
 from django.contrib.auth.views import PasswordResetConfirmView
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
-from django.db.models import F
+from django.db.models import F, Value
+from django.db.models.functions import Replace
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -25,6 +26,13 @@ from .models import RegistroPendiente, Usuario, Videos
 
 logger = logging.getLogger(__name__)
 REGISTRATION_SESSION_KEY = "_registration_token_hash"
+TITLE_SEARCH_REPLACEMENTS = {
+    **dict(zip("áéíóúüñÁÉÍÓÚÜÑ", "aeiouunaeiouun", strict=True)),
+    "\N{COMBINING ACUTE ACCENT}": "",
+    "\N{COMBINING TILDE}": "",
+    "\N{COMBINING DIAERESIS}": "",
+}
+TITLE_SEARCH_TRANSLATION = str.maketrans(TITLE_SEARCH_REPLACEMENTS)
 
 
 @require_http_methods(["GET", "HEAD", "POST"])
@@ -33,8 +41,16 @@ def index(request):
         query = request.POST.get("search", "").strip()[:100]
         return redirect(f"{reverse('home')}?{urlencode({'search': query})}")
     query = request.GET.get("search", "").strip()[:100]
-    catalog = Videos.objects.order_by("pk")
-    results = catalog.filter(nombre__icontains=query) if query else catalog
+    results = Videos.objects.order_by("pk")
+    if query:
+        searchable_title = F("nombre")
+        for char, replacement in TITLE_SEARCH_REPLACEMENTS.items():
+            searchable_title = Replace(searchable_title, Value(char), Value(replacement))
+        results = results.alias(searchable_title=searchable_title)
+        for term in query.split():
+            normalized_term = term.translate(TITLE_SEARCH_TRANSLATION) or term
+            results = results.filter(searchable_title__icontains=normalized_term)
+
     page = Paginator(results, 24).get_page(request.GET.get("page"))
     return render(
         request,
@@ -43,7 +59,6 @@ def index(request):
             "videos": page.object_list,
             "page": page,
             "query": query,
-            "autocomplete": catalog.values_list("nombre", flat=True)[:24],
         },
     )
 
@@ -173,14 +188,7 @@ def play_(request, id):
         raise Http404
     if request.method == "GET":
         Videos.objects.filter(pk=video.pk).update(visitas=F("visitas") + 1)
-    return render(
-        request,
-        "play.html",
-        {
-            "video": video,
-            "autocomplete": Videos.objects.order_by("pk").values_list("nombre", flat=True)[:24],
-        },
-    )
+    return render(request, "play.html", {"video": video})
 
 
 @require_safe
