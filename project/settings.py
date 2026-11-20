@@ -160,21 +160,22 @@ if DEVELOPMENT:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
     DEFAULT_FROM_EMAIL = "soplax@localhost"
 else:
-    INSTALLED_APPS += ["storages", "django_ratelimit", "django_rq"]
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.mysql",
+            "ENGINE": "django.db.backends.postgresql",
             "NAME": required_env("DB_NAME"),
             "USER": required_env("DB_USER", "DB_NAME"),
             "PASSWORD": required_env("DB_PASSWORD"),
             "HOST": required_env("DB_HOST"),
-            "PORT": os.getenv("DB_PORT", "3306"),
-            "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},
+            "PORT": os.getenv("DB_PORT", "5432"),
+            "OPTIONS": {},
         }
     }
     if db_ssl_ca := os.getenv("DB_SSL_CA"):
-        DATABASES["default"]["OPTIONS"].update(ssl={"ca": db_ssl_ca}, ssl_mode="VERIFY_IDENTITY")
+        DATABASES["default"]["OPTIONS"].update(sslmode="verify-full", sslrootcert=db_ssl_ca)
 
+if not DEVELOPMENT or os.getenv("DJANGO_USE_S3") == "1":
+    INSTALLED_APPS.append("storages")
     bucket = required_env("AWS_STORAGE_BUCKET_NAME")
     region = required_env("AWS_S3_REGION_NAME")
     if not re.fullmatch(r"[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]", bucket) or not re.fullmatch(
@@ -203,6 +204,8 @@ else:
         "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
     }
 
+if not DEVELOPMENT:
+    INSTALLED_APPS += ["django_ratelimit", "django_rq"]
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
     EMAIL_HOST = required_env("EMAIL_HOST", "STMPURL")
     EMAIL_HOST_USER = required_env("EMAIL_HOST_USER", "SENDER_EMAIL_ADDRESS")

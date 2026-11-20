@@ -4,15 +4,15 @@ x-app: &app
   image: soplax:production
   build: .
   pull_policy: never
-  env_file: .env.production
+  env_file: ${SOPLAX_ENV_FILE:-.env.production}
   environment:
     DJANGO_ENV: production
     DJANGO_SETTINGS_MODULE: project.settings_docker
     DJANGO_TRUST_PROXY: "1"
     REDIS_URL: redis://redis:6379/0
-    DB_NAME: "${DB_NAME:?Define DB_NAME en .env.production}"
+    DB_NAME: "${DB_NAME:?Define DB_NAME en el archivo indicado con --env-file}"
     DB_USER: "${DB_USER:-${DB_NAME}}"
-    DB_PASSWORD: "${DB_PASSWORD:?Define DB_PASSWORD en .env.production}"
+    DB_PASSWORD: "${DB_PASSWORD:?Define DB_PASSWORD en el archivo indicado con --env-file}"
   depends_on:
     redis:
       condition: service_healthy
@@ -60,20 +60,19 @@ services:
       retries: 10
     restart: unless-stopped
 
-  mysql:
-    image: mysql:8.4
-    profiles: [mysql]
+  postgres:
+    image: postgres:18-alpine
+    profiles: [postgres]
     environment:
-      MYSQL_DATABASE: "${DB_NAME:?Define DB_NAME en .env.production}"
-      MYSQL_USER: "${DB_USER:-${DB_NAME}}"
-      MYSQL_PASSWORD: "${DB_PASSWORD:?Define DB_PASSWORD en .env.production}"
-      MYSQL_RANDOM_ROOT_PASSWORD: "1"
+      POSTGRES_DB: "${DB_NAME:?Define DB_NAME en el archivo indicado con --env-file}"
+      POSTGRES_USER: "${DB_USER:-${DB_NAME}}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD:?Define DB_PASSWORD en el archivo indicado con --env-file}"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql
     healthcheck:
       test:
         - CMD-SHELL
-        - 'MYSQL_PWD="$$MYSQL_PASSWORD" mysql --protocol=TCP -h 127.0.0.1 -u "$$MYSQL_USER" "$$MYSQL_DATABASE" -e "SELECT 1" >/dev/null 2>&1'
+        - 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
       interval: 5s
       timeout: 4s
       start_period: 30s
@@ -82,4 +81,4 @@ services:
 
 volumes:
   redis_data:
-  mysql_data:
+  postgres_data:
