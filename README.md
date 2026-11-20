@@ -1,7 +1,7 @@
 # Adult Content Platform (SoplaX)
 
 A lightweight adult content platform built with **Django** and styled using **Bootstrap**.  
-The platform delivers videos hosted on **AWS S3** and integrates **ExoClick** for advertising and monetization.  
+The platform delivers videos hosted on **AWS S3**. Third-party advertising is paused.
 
 ---
 
@@ -10,7 +10,7 @@ The platform delivers videos hosted on **AWS S3** and integrates **ExoClick** fo
 - **Django Backend** for content management and routing.  
 - **Bootstrap UI** for a simple, responsive front-end.  
 - **Video Hosting with AWS S3** for scalable and secure storage.  
-- **ExoClick Advertising Integration** for revenue generation.  
+- **Email verification and password recovery** with expiring links.
 - **Lightweight Architecture** designed for easy deployment and maintenance.  
 
 ---
@@ -20,12 +20,13 @@ The platform delivers videos hosted on **AWS S3** and integrates **ExoClick** fo
 - **Backend**: Django (Python)  
 - **Frontend**: HTML, CSS, Bootstrap  
 - **Storage**: AWS S3  
-- **Advertising**: ExoClick  
 - **Database**: SQLite (development) / MySQL (production)  
 
 ---
 
 ## 📦 Installation (Basic Setup)
+
+Use Python 3.14. Keep the existing `.env` if it already contains connection settings. For a new clone, use [.env.example](.env.example) as the starting point.
 
 ```bash
 # Clone the repository
@@ -34,14 +35,27 @@ cd SoplaX
 
 # Create and activate virtual environment
 python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
+source venv/bin/activate  # Linux/macOS
+```
 
-# Install dependencies
+On Windows, activate it with `.\venv\Scripts\Activate.ps1` in PowerShell.
+
+```bash
 pip install -r requirements.txt
+```
 
-# Run migrations
+Set `DJANGO_ENV=development` and generate a value for `DJANGO_SECRET_KEY` in your local environment or untracked `.env`.
+
+```bash
+python -c "from secrets import token_urlsafe; print(token_urlsafe(64))"
+```
+
+```bash
 python manage.py migrate
+python manage.py test
+python manage.py runserver 127.0.0.1:8000
+```
 
-# Start development server
-python manage.py runserver
+The development profile uses SQLite, local media files and console email. Check the terminal running Django for registration and recovery links. `DJANGO_SQLITE_PATH` can point to a separate SQLite database when validating changes.
+
+See [Deploying SoplaX with Docker](DEPLOYMENT.md) for production configuration and how to prepare a copy of an existing MySQL database.

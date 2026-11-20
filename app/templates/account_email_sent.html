@@ -1,0 +1,8 @@
+{% extends "account_base.html" %}
+
+{% block title %}Revisa tu correo{% endblock %}
+{% block account %}
+  <h1 class="h4 mb-3">Revisa tu correo</h1>
+  <p>Si la dirección puede recibir un enlace para esta solicitud, te lo enviaremos en breve.</p>
+  <p class="mb-0"><a href="{% url 'login' %}">Volver al inicio de sesión</a></p>
+{% endblock %}

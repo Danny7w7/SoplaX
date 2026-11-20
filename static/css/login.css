@@ -47,6 +47,19 @@
     border-bottom: 2px solid gray;
     width: 100%;
 }
+form input:not([type="hidden"]) {
+    display: block;
+    width: 100%;
+    padding: .5rem;
+    border: 1px solid #767676;
+    border-radius: .25rem;
+}
+.errorlist {
+    color: #a32020;
+}
+.helptext {
+    font-size: .9rem;
+}
 main{
     font-family: 'Nunito', sans-serif;
 }
