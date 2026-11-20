@@ -3,5 +3,6 @@ __pycache__/
 venv/
 migrations/
 .env
+.env.production
 *.py[cod]
 *$py.class

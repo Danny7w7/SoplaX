@@ -1,0 +1,85 @@
+name: soplax
+
+x-app: &app
+  image: soplax:production
+  build: .
+  pull_policy: never
+  env_file: .env.production
+  environment:
+    DJANGO_ENV: production
+    DJANGO_SETTINGS_MODULE: project.settings_docker
+    DJANGO_TRUST_PROXY: "1"
+    REDIS_URL: redis://redis:6379/0
+    DB_NAME: "${DB_NAME:?Define DB_NAME en .env.production}"
+    DB_USER: "${DB_USER:-${DB_NAME}}"
+    DB_PASSWORD: "${DB_PASSWORD:?Define DB_PASSWORD en .env.production}"
+  depends_on:
+    redis:
+      condition: service_healthy
+  restart: unless-stopped
+
+services:
+  web:
+    <<: *app
+    ports:
+      - "127.0.0.1:${SOPLAX_WEB_PORT:-8080}:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import os
+          from urllib.parse import urlsplit
+          from urllib.request import Request, urlopen
+
+          host = urlsplit(os.environ["DJANGO_PUBLIC_BASE_URL"]).netloc
+          request = Request("http://127.0.0.1:8000/healthz/", headers={"Host": host, "X-Forwarded-Proto": "https"})
+          with urlopen(request, timeout=4) as response:
+              if response.status != 200 or response.read() != b"ok\n":
+                  raise SystemExit(1)
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+  worker:
+    <<: *app
+    command: ["python", "manage.py", "rqworker", "account_mail", "--serializer", "rq.serializers.JSONSerializer"]
+    stop_grace_period: 30s
+
+  redis:
+    image: redis:8.4-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.4
+    profiles: [mysql]
+    environment:
+      MYSQL_DATABASE: "${DB_NAME:?Define DB_NAME en .env.production}"
+      MYSQL_USER: "${DB_USER:-${DB_NAME}}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:?Define DB_PASSWORD en .env.production}"
+      MYSQL_RANDOM_ROOT_PASSWORD: "1"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'MYSQL_PWD="$$MYSQL_PASSWORD" mysql --protocol=TCP -h 127.0.0.1 -u "$$MYSQL_USER" "$$MYSQL_DATABASE" -e "SELECT 1" >/dev/null 2>&1'
+      interval: 5s
+      timeout: 4s
+      start_period: 30s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  mysql_data:
