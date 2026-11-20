@@ -7,8 +7,5 @@ db.sqlite3-*
 staticfiles/
 .env
 .env.*
-!.env.example
-!.env.production.example
-.env.production
 *.py[cod]
 *$py.class

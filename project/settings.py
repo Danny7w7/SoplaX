@@ -9,7 +9,8 @@ from dotenv import load_dotenv
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env")
+env_file = ".env.production" if os.getenv("DJANGO_ENV") == "production" else ".env"
+load_dotenv(BASE_DIR / env_file)
 
 
 def required_env(name, legacy_name=None):

@@ -26,7 +26,7 @@ The platform delivers videos hosted on **AWS S3**. Third-party advertising is pa
 
 ## 📦 Installation (Basic Setup)
 
-Use Python 3.14. Keep the existing `.env` if it already contains connection settings. For a new clone, use [.env.example](.env.example) as the starting point.
+Use Python 3.14.
 
 ```bash
 # Clone the repository
@@ -44,7 +44,7 @@ On Windows, activate it with `.\venv\Scripts\Activate.ps1` in PowerShell.
 pip install -r requirements.txt
 ```
 
-Set `DJANGO_ENV=development` and generate a value for `DJANGO_SECRET_KEY` in your local environment or untracked `.env`.
+Set `DJANGO_ENV=development` in your untracked `.env` and generate a value for `DJANGO_SECRET_KEY`.
 
 ```bash
 python -c "from secrets import token_urlsafe; print(token_urlsafe(64))"

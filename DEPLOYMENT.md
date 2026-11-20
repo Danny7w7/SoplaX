@@ -4,19 +4,20 @@ El servicio web ejecuta Django con Gunicorn y sirve los estáticos desde la imag
 
 ## Configuración
 
-Copia la plantilla y completa los valores en `.env.production`.
+Crea `.env.production` con `DJANGO_ENV=production` y genera la clave para `DJANGO_SECRET_KEY`.
 
 ```sh
-cp .env.production.example .env.production
 python -c "from secrets import token_urlsafe; print(token_urlsafe(48))"
 ```
 
-- Usa una clave nueva en `DJANGO_SECRET_KEY` y ajusta los dominios y el origen HTTPS a tu despliegue. Retira la clave publicada de todo entorno. La rotación invalida las sesiones y los enlaces firmados con esa clave.
-- Configura el bucket y la región de S3. Activa el bloqueo de acceso público y concede a la identidad del contenedor acceso a los prefijos de videos y miniaturas. Usa credenciales del entorno si tu plataforma requiere claves de AWS. Las URLs de lectura se firman por una hora.
-- Configura el servidor SMTP y sus credenciales. El perfil usa STARTTLS en el puerto 587 por defecto.
-- Con MySQL de Compose, usa `DB_HOST=mysql` y define `DB_PASSWORD` antes de crear el volumen. Con una base externa, configura su host, puerto, base, usuario y contraseña.
+- Configura `DJANGO_ALLOWED_HOSTS` y `DJANGO_PUBLIC_BASE_URL` con los dominios y el origen HTTPS del despliegue. Retira la clave de Django publicada de todo entorno. La rotación invalida las sesiones y los enlaces firmados con esa clave.
+- Define `AWS_STORAGE_BUCKET_NAME` y `AWS_S3_REGION_NAME`. Activa el bloqueo de acceso público y concede a la identidad del contenedor acceso a los prefijos de videos y miniaturas. Si tu plataforma requiere claves, define `AWS_ACCESS_KEY_ID` y `AWS_SECRET_ACCESS_KEY`. Las URLs de lectura se firman por una hora.
+- Define `EMAIL_HOST`, `EMAIL_HOST_USER` y `EMAIL_HOST_PASSWORD`. El perfil usa STARTTLS en el puerto 587 por defecto.
+- Define `DB_HOST`, `DB_NAME`, `DB_USER` y `DB_PASSWORD`. Con MySQL de Compose, usa `DB_HOST=mysql`. Para una base externa puedes ajustar `DB_PORT`.
 - Escribe entre comillas simples los valores que contengan `$` para que Compose los lea literalmente.
 - Mantén Redis, MySQL y el puerto interno del servicio web en redes privadas. La imagen usa un usuario sin privilegios y excluye los archivos `.env*` de su contexto.
+
+Al ejecutar Django directamente con `DJANGO_ENV=production` en el entorno del proceso, se carga `.env.production`. En ese caso, define también `REDIS_URL` con la conexión a Redis.
 
 ## Arranque con MySQL de Compose
 
