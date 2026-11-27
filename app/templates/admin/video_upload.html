@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Subir video · SoplaX{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{% static 'css/pages/video-upload.css' %}">{% endblock %}
+{% block scripts %}<script src="{% static 'js/video-upload.js' %}" defer></script>{% endblock %}
+{% block header %}{% include "partials/header_minimal.html" %}{% endblock %}
+{% block age_gate %}{% endblock %}
+
+{% block content %}
+<div class="video-upload container">
+  <header class="video-upload__header">
+    {% if can_view_videos %}
+    <a class="back-link" href="{% url 'admin:app_videos_changelist' %}"><span aria-hidden="true">←</span> Videos</a>
+    {% else %}
+    <a class="back-link" href="{% url 'admin:index' %}"><span aria-hidden="true">←</span> Administración</a>
+    {% endif %}
+    <h1 class="video-upload__title">Subir video</h1>
+  </header>
+
+  <form class="form" method="post" action="{{ form_url }}" enctype="multipart/form-data" data-loading>
+    {% csrf_token %}
+    {% if form.errors %}
+    <div class="form-alert" role="alert">
+      {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+      <p>Vuelve a seleccionar los archivos antes de publicar.</p>
+    </div>
+    {% endif %}
+    <div class="video-upload__grid">
+      <section class="video-upload__card" aria-labelledby="upload-details">
+        <h2 id="upload-details">Detalles del video</h2>
+        {% include "admin/video_upload_field.html" with field=form.nombre only %}
+        {% include "admin/video_upload_field.html" with field=form.descripcion only %}
+
+        <details class="video-upload__classification"{% if form.idioma.errors or form.categorias.errors or form.actores.errors or form.posturas.errors %} open{% endif %}>
+          <summary>Clasificación (opcional)</summary>
+          <div class="video-upload__classification-fields">
+            {% include "admin/video_upload_field.html" with field=form.idioma only %}
+            {% include "admin/video_upload_field.html" with field=form.categorias only %}
+            {% include "admin/video_upload_field.html" with field=form.actores only %}
+            {% include "admin/video_upload_field.html" with field=form.posturas only %}
+          </div>
+        </details>
+      </section>
+
+      <section class="video-upload__card" aria-labelledby="upload-files">
+        <h2 id="upload-files">Archivos</h2>
+        {% include "admin/video_upload_field.html" with field=form.video only %}
+        {% include "admin/video_upload_field.html" with field=form.miniatura only %}
+        <figure class="video-upload__preview" data-thumbnail-preview hidden>
+          <span class="video-upload__placeholder" data-thumbnail-placeholder>
+            <span class="icon-play" aria-hidden="true"></span>
+            Vista previa de la miniatura
+          </span>
+          <img alt="Vista previa de la miniatura" hidden>
+        </figure>
+      </section>
+    </div>
+
+    <div class="video-upload__actions">
+      <p>El video aparecerá en el catálogo al publicarlo.</p>
+      <button class="button button--primary button--lg" type="submit" name="_publish" value="1">Publicar video</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

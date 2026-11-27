@@ -32,6 +32,6 @@
     {% block content %}{% endblock %}
   </main>
   {% block footer %}{% include "partials/footer.html" %}{% endblock %}
-  {% include "partials/age_gate.html" %}
+  {% block age_gate %}{% include "partials/age_gate.html" %}{% endblock %}
 </body>
 </html>
