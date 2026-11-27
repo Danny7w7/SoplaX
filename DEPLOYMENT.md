@@ -70,6 +70,24 @@ docker compose --env-file .env.production --profile postgres run --rm --no-deps 
 
 Con PostgreSQL externo, omite `--profile postgres`. Si el despliegue usa otro archivo de entorno, conserva su ruta en `--env-file` y `SOPLAX_ENV_FILE`.
 
+## Convertir miniaturas existentes a WebP
+
+Desde la carpeta de SoplaX en la VPS, verifica que `DB_HOST` y `DB_NAME` correspondan a su catálogo activo y que `AWS_STORAGE_BUCKET_NAME` sea el bucket que contiene las miniaturas. Reconstruye la imagen que trae el conversor y ejecuta la simulación.
+
+```sh
+docker compose --env-file .env.production build web
+docker compose --env-file .env.production --profile postgres run --rm --no-deps web python manage.py convertir_miniaturas_webp --dry-run
+```
+
+La simulación muestra los IDs afectados, los archivos de origen y su peso antes y después. El conversor genera una WebP por archivo compartido, con hasta 960 × 540 píxeles y la proporción original. Las fotos originales se conservan. Para limpiar una aplicación fallida, la cuenta de S3 necesita permiso para borrar los archivos recién creados en `upload/photos/webp/`.
+
+Después de revisar el plan, aplica el cambio y repite la simulación. Si el catálogo sigue igual, el último comando mostrará cero WebP nuevas.
+
+```sh
+docker compose --env-file .env.production --profile postgres run --rm --no-deps web python manage.py convertir_miniaturas_webp --aplicar
+docker compose --env-file .env.production --profile postgres run --rm --no-deps web python manage.py convertir_miniaturas_webp --dry-run
+```
+
 ## Base de datos con contenido
 
 Para pasar de MySQL a PostgreSQL, exporta los datos desde una copia de MySQL e impórtalos a una base PostgreSQL separada con el esquema de Django ya migrado. Valida la transferencia en pruebas antes del corte.
