@@ -1,0 +1,49 @@
+{% load static %}
+<header class="site-header{% if compact %} site-header--compact{% endif %}">
+  <div class="site-container site-header__inner">
+    {% if unlinked_brand %}
+      <span class="wordmark">Sopla<span>X</span></span>
+    {% else %}
+      <a class="wordmark" href="{% url 'home' %}" aria-label="SoplaX">Sopla<span>X</span></a>
+    {% endif %}
+    {% if not compact %}
+      <form class="site-search" method="get" action="{% url 'home' %}" role="search" id="buscar">
+        <span class="site-search__icon" aria-hidden="true"></span>
+        <input type="search" name="search" value="{{ query }}" aria-label="Buscar por título"
+               placeholder="Buscar por título" maxlength="100">
+        {% if query %}
+          <a class="site-search__clear" href="{% url 'home' %}" aria-label="Limpiar búsqueda">
+            <span aria-hidden="true">×</span>
+          </a>
+        {% endif %}
+        <button class="button button--primary" type="submit">Buscar</button>
+      </form>
+      <nav class="site-account" aria-label="Cuenta">
+        {% if request.user.is_authenticated %}
+          <details class="account-menu" data-account-menu>
+            <summary class="button button--secondary">
+              <span class="account-menu__name">{{ user.get_short_name|default:user.username }}</span>
+              <span class="account-menu__chevron" aria-hidden="true"></span>
+            </summary>
+            <ul class="account-menu__items">
+              {% if user.is_staff %}
+                <li><a href="{% url 'admin:index' %}">Menú administrador</a></li>
+              {% endif %}
+              <li>
+                <form method="post" action="{% url 'logout' %}">
+                  {% csrf_token %}
+                  <button type="submit">Cerrar sesión</button>
+                </form>
+              </li>
+            </ul>
+          </details>
+        {% else %}
+          <a class="button button--secondary" href="{% url 'login' %}">Iniciar sesión</a>
+        {% endif %}
+      </nav>
+    {% endif %}
+  </div>
+</header>
+{% if not compact and request.user.is_authenticated %}
+  <script src="{% static 'js/account-menu.js' %}" defer></script>
+{% endif %}

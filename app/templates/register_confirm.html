@@ -2,15 +2,15 @@
 
 {% block title %}Completar registro{% endblock %}
 {% block account %}
-  <h1 class="h4 mb-4">Completar registro</h1>
+  <h1 id="account-title">Completar registro</h1>
   {% if form %}
-    <form method="post">
+    <form class="form-stack account-form" method="post">
       {% csrf_token %}
-      {{ form.as_p }}
-      <button class="btn first mt-4" type="submit">Crear cuenta</button>
+      {{ form.as_div }}
+      <button class="button button--primary" type="submit">Crear cuenta</button>
     </form>
   {% else %}
-    <p>El enlace de registro no está disponible.</p>
-    <p class="mb-0"><a href="{% url 'register' %}">Solicitar un enlace nuevo</a></p>
+    <p class="notice notice--error account-message">El enlace de registro no está disponible.</p>
+    <a class="button button--primary account-action" href="{% url 'register' %}">Solicitar un enlace nuevo</a>
   {% endif %}
 {% endblock %}

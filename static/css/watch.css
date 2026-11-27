@@ -1,0 +1,90 @@
+.site-container.watch-page {
+    max-width: 72rem;
+    padding-block: var(--space-6) var(--space-10);
+}
+
+.watch-player {
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-background);
+}
+
+.watch-player video {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: contain;
+}
+
+.watch-details {
+    margin-top: var(--space-4);
+    overflow-wrap: anywhere;
+}
+
+.watch-details h1,
+.redirect-panel h1 {
+    margin: 0;
+    font-size: clamp(1.5rem, 4vw, 2.25rem);
+    line-height: 1.2;
+}
+
+.watch-details p,
+.redirect-panel > p {
+    margin: var(--space-3) 0 0;
+    color: var(--color-text-muted);
+}
+
+.watch-details p {
+    white-space: pre-line;
+}
+
+.site-container.redirect-page {
+    max-width: 42rem;
+    padding-block: clamp(var(--space-6), 8vw, var(--space-12));
+}
+
+.redirect-actions {
+    margin-top: var(--space-6);
+}
+
+.redirect-actions > [hidden] {
+    display: none;
+}
+
+.redirect-countdown {
+    margin: 0;
+    color: var(--color-accent);
+    font-variant-numeric: tabular-nums;
+}
+
+.redirect-link-row {
+    display: grid;
+    min-width: 0;
+    gap: var(--space-2);
+}
+
+.redirect-link label {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-weight: 600;
+}
+
+.redirect-link .field-control {
+    min-width: 0;
+}
+
+.redirect-feedback {
+    margin: 0;
+    color: var(--color-text-muted);
+}
+
+.redirect-feedback:not(:empty) {
+    margin-top: var(--space-2);
+}
+
+@media (min-width: 36rem) {
+    .redirect-link-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+}

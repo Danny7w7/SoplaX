@@ -2,13 +2,15 @@
 
 {% block title %}Iniciar sesión{% endblock %}
 {% block account %}
-  <h1 class="h4 mb-4">Iniciar sesión</h1>
-  <form method="post">
+  <h1 id="account-title">Iniciar sesión</h1>
+  <form class="form-stack account-form" method="post">
     {% csrf_token %}
-    {{ form.as_p }}
+    {{ form.as_div }}
     {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-    <button class="btn first mt-4" type="submit">Entrar</button>
+    <button class="button button--primary" type="submit">Entrar</button>
   </form>
-  <p class="mt-4"><a href="{% url 'recover' %}">¿Olvidaste tu contraseña?</a></p>
-  <p class="mb-0"><a href="{% url 'register' %}">Crear cuenta</a></p>
+  <nav class="account-links" aria-label="Opciones de cuenta">
+    <a href="{% url 'recover' %}">¿Olvidaste tu contraseña?</a>
+    <a href="{% url 'register' %}">Crear cuenta</a>
+  </nav>
 {% endblock %}

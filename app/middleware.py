@@ -1,7 +1,7 @@
 from ipaddress import ip_address
 
 from django.conf import settings
-from django.http import HttpResponse
+from django.shortcuts import render
 from django.utils.cache import patch_cache_control
 from django_ratelimit.core import is_ratelimited
 from redis.exceptions import RedisError
@@ -18,11 +18,9 @@ def client_ip(request):
 
 
 def auth_service_unavailable():
-    return HttpResponse(
-        "El servicio de cuentas no está disponible temporalmente.",
-        status=503,
-        headers={"Cache-Control": "no-store"},
-    )
+    response = render(None, "503.html", status=503)
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 class AuthThrottleMiddleware:
@@ -51,11 +49,9 @@ class AuthThrottleMiddleware:
         except RedisError:
             return auth_service_unavailable()
         if limited:
-            return HttpResponse(
-                "Demasiadas solicitudes. Inténtalo más tarde.",
-                status=429,
-                headers={"Cache-Control": "no-store"},
-            )
+            response = render(None, "429.html", status=429)
+            response.headers["Cache-Control"] = "no-store"
+            return response
         return None
 
 
@@ -66,9 +62,9 @@ class ContentSecurityPolicyMiddleware:
         self.policy = "; ".join(
             [
                 "default-src 'self'",
-                "script-src 'self' https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js",
-                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css https://fonts.googleapis.com",
-                "font-src 'self' https://fonts.gstatic.com",
+                "script-src 'self'",
+                "style-src 'self' 'unsafe-inline'",
+                "font-src 'self'",
                 f"img-src 'self' data: https://cdn-icons-png.flaticon.com{media}",
                 f"media-src 'self'{media}",
                 "base-uri 'none'",

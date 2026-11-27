@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block header %}{% include "includes/site_header.html" with compact=True %}{% endblock %}
+{% block main_class %}site-container error-layout{% endblock %}
+
+{% block content %}
+  <div class="surface error-page">
+    <div>{% block error %}{% endblock %}</div>
+    <a class="button button--primary" href="{% url 'home' %}">Volver al catálogo</a>
+  </div>
+{% endblock %}

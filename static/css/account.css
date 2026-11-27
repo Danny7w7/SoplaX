@@ -1,0 +1,105 @@
+.account-layout {
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    padding-block: var(--space-8);
+}
+
+.account-card {
+    width: 100%;
+    max-width: 29rem;
+    padding: var(--space-6);
+}
+
+.account-card h1 {
+    margin: 0;
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.account-copy {
+    margin: var(--space-3) 0 0;
+    color: var(--color-text-muted);
+}
+
+.account-message,
+.account-form,
+.account-action {
+    margin: var(--space-6) 0 0;
+}
+
+.account-form > div {
+    display: grid;
+    gap: var(--space-2);
+}
+
+.account-form label {
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.account-form .helptext,
+.account-form .errorlist {
+    font-size: 0.875rem;
+}
+
+.account-form .helptext {
+    color: var(--color-text-muted);
+}
+
+.account-form .helptext ul,
+.account-form .errorlist {
+    margin: 0;
+    padding-inline-start: var(--space-4);
+}
+
+.account-form .errorlist {
+    color: var(--color-danger);
+}
+
+.account-form .errorlist.nonfield {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-danger);
+    border-radius: var(--radius-sm);
+    list-style: none;
+}
+
+.account-form input[aria-invalid="true"] {
+    border-color: var(--color-danger);
+}
+
+.account-form > .button {
+    margin-top: var(--space-1);
+}
+
+.account-action {
+    width: 100%;
+}
+
+.account-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    column-gap: var(--space-4);
+    margin-top: var(--space-6);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--color-border);
+    font-size: 0.9375rem;
+}
+
+.account-links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+}
+
+@media (min-width: 36rem) {
+    .account-layout {
+        padding-block: var(--space-12);
+    }
+
+    .account-card {
+        padding: var(--space-8);
+    }
+}

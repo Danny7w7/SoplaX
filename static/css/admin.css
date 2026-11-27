@@ -1,83 +1,139 @@
-.body{
-    background-color: #010101;    
-}
-.table{
-    color: white;
-    background-color:#333333;
-    border-radius: 20px;
+/* Map Django's native admin variables to the SoplaX palette. */
+:root,
+html[data-theme] {
+    color-scheme: light dark;
+    --admin-light-link: color-mix(in srgb, var(--color-primary) 58%, var(--color-background));
+    --admin-light-surface: color-mix(in srgb, var(--color-accent) 18%, var(--color-text));
+    --admin-light-border: color-mix(in srgb, var(--color-border) 28%, var(--color-text));
+    --admin-light-muted: color-mix(in srgb, var(--color-background) 73%, var(--color-text-muted));
+    --admin-light-control-border: color-mix(in srgb, var(--color-border) 65%, var(--color-text));
+    --admin-highlight: light-dark(var(--admin-light-link), var(--color-accent));
+
+    --font-family-primary: var(--font-sans);
+    --primary: color-mix(in srgb, var(--color-primary) 32%, var(--color-surface));
+    --primary-fg: var(--color-text);
+    --secondary: var(--color-surface);
+    --accent: var(--color-accent);
+    --body-bg: light-dark(var(--color-text), var(--color-background));
+    --body-fg: light-dark(var(--color-background), var(--color-text));
+    --body-quiet-color: light-dark(var(--admin-light-muted), var(--color-text-muted));
+    --body-medium-color: var(--body-fg);
+    --body-loud-color: var(--body-fg);
+    --header-bg: var(--color-surface);
+    --header-color: var(--color-text);
+    --header-link-color: var(--color-text);
+    --breadcrumbs-bg: var(--darkened-bg);
+    --breadcrumbs-fg: var(--body-quiet-color);
+    --breadcrumbs-link-fg: var(--admin-highlight);
+    --link-fg: var(--admin-highlight);
+    --link-hover-color: light-dark(var(--body-fg), var(--color-primary-hover));
+    --link-selected-fg: var(--admin-highlight);
+    --darkened-bg: light-dark(var(--admin-light-surface), var(--color-surface));
+    --hairline-color: light-dark(var(--admin-light-border), var(--color-border));
+    --border-color: light-dark(var(--admin-light-control-border), var(--color-control-border));
+    --selected-bg: light-dark(var(--admin-light-border), var(--color-border));
+    --selected-row: color-mix(in srgb, var(--color-primary) 20%, var(--body-bg));
+    --error-fg: light-dark(var(--delete-button-bg), var(--color-danger));
+    --message-error-bg: color-mix(in srgb, var(--color-danger) 12%, var(--body-bg));
+    --message-success-bg: color-mix(in srgb, var(--color-success) 12%, var(--body-bg));
+    --message-warning-bg: color-mix(in srgb, var(--color-warning) 12%, var(--body-bg));
+    --button-fg: var(--color-text);
+    --button-bg: var(--admin-light-link);
+    --button-hover-bg: var(--primary);
+    --default-button-bg: light-dark(var(--admin-light-link), var(--color-primary));
+    --default-button-hover-bg: light-dark(var(--primary), var(--color-primary-hover));
+    --admin-default-button-fg: light-dark(var(--color-text), var(--color-background));
+    --close-button-bg: var(--color-border);
+    --close-button-hover-bg: var(--primary);
+    --object-tools-bg: var(--admin-light-link);
+    --object-tools-hover-bg: var(--primary);
 }
 
-.table thead th{
-    color: white;
-    width: 20%;
-}
-.table tbody td {
-    color: white;
-  width: 18%;
+html[data-theme="light"] {
+    color-scheme: light;
 }
 
-.hola{
-    color: white;
-    background-color: #1A237E;
-    margin-bottom: 1%;
-    display: flex;
-    justify-content: center;
+html[data-theme="dark"] {
+    color-scheme: dark;
 }
 
-.buenas{
-    margin-left: 13%;
+#header,
+div.breadcrumbs {
+    border-bottom: 1px solid var(--hairline-color);
 }
 
-.btn1{
-    background-color: #1A237E;
-    color: white;
-    border-radius: 5px;
-    border-color: transparent;
-    margin-bottom: 10px;
+#header {
+    --admin-highlight: var(--color-accent);
 }
 
-.edi{
-    width: 11%;
-    height: 8%;
-}
-.btn2{
-    color: white;
-    background-color: rgb(253, 2, 2);
-    border-radius: 5px;
-    border-color: transparent;
-}
-.eli{
-    color: white;
-    width: 11%;
-    height: 8%;
+#site-name {
+    font-weight: 700;
 }
 
-.btn3{
-    color: black;
-    background-color: rgba(26, 211, 51, 0.699);
-    border-radius: 5px;
-    border-color: transparent;
+#header #site-name a {
+    color: var(--color-text);
 }
 
-.comoestas{
-    display: flex;
-    justify-content: center;
+#site-name span {
+    color: var(--color-accent);
 }
 
-.btn1:hover {
-    background-color: #f4f7f8;
-    color: #000000;
-    transition: 0.5s;
+.login #container {
+    min-width: 0;
+    border-radius: var(--radius);
 }
 
-.btn2:hover{
-    background-color: #fdfbfb;
-    color: rgb(8, 8, 8);
-    transition: 0.5s;
+.button.default,
+input[type="submit"].default,
+.login input[type="submit"] {
+    color: var(--admin-default-button-fg);
 }
 
-.btn3:hover{
-    background-color: #f4f7f8;
-    color: #000000;
-    transition: 0.5s;
+.login input[type="submit"] {
+    background: var(--default-button-bg);
+}
+
+.login input[type="submit"]:is(:hover, :focus) {
+    background: var(--default-button-hover-bg);
+}
+
+#changelist-filter,
+#content-related,
+#toolbar,
+.submit-row,
+.button,
+input[type="submit"],
+.submit-row a.deletelink,
+.submit-row a.closelink,
+.object-tools a:link,
+.object-tools a:visited {
+    border-radius: var(--radius-sm);
+}
+
+#content-start :is(input, textarea, select) {
+    accent-color: var(--admin-light-link);
+}
+
+#changelist-filter li.selected {
+    border-left-color: var(--admin-highlight);
+}
+
+#toolbar form input[type="submit"],
+#changelist .actions .button {
+    box-shadow: none;
+}
+
+.selector-chosen .list-footer-display__clear {
+    color: var(--color-accent);
+}
+
+body :is(a, button, input, textarea, select, summary):focus-visible {
+    outline: 2px solid var(--admin-highlight);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body :is(a, button, input) {
+        transition-duration: 0s;
+    }
 }

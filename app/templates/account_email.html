@@ -2,12 +2,14 @@
 
 {% block title %}{{ title }}{% endblock %}
 {% block account %}
-  <h1 class="h4 mb-3">{{ title }}</h1>
-  <p>{{ instruction }}</p>
-  <form method="post">
+  <h1 id="account-title">{{ title }}</h1>
+  <p class="account-copy">{{ instruction }}</p>
+  <form class="form-stack account-form" method="post">
     {% csrf_token %}
-    {{ form.as_p }}
-    <button class="btn first mt-4" type="submit">Enviar</button>
+    {{ form.as_div }}
+    <button class="button button--primary" type="submit">Enviar</button>
   </form>
-  <p class="mt-4 mb-0"><a href="{% url 'login' %}">Volver al inicio de sesión</a></p>
+  <div class="account-links">
+    <a href="{% url 'login' %}">Volver al inicio de sesión</a>
+  </div>
 {% endblock %}

@@ -1,0 +1,10 @@
+<a class="video-card" href="{% url 'play' id=video.id %}">
+  <div class="video-card__thumbnail{% if not video.miniatura %} video-card__thumbnail--placeholder{% endif %}">
+    {% if video.miniatura %}
+      <img src="{{ video.miniatura.url }}" alt="" decoding="async"
+           {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
+    {% endif %}
+    <span class="video-card__play" aria-hidden="true"></span>
+  </div>
+  <h2 class="video-card__title">{{ video.nombre }}</h2>
+</a>
