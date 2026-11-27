@@ -1,0 +1,12 @@
+{% extends "panel_base.html" %}
+
+{% block panel %}
+  <p class="error-code" aria-hidden="true">{% block error_code %}{% endblock %}</p>
+  <header class="panel__header">
+    <h1 class="panel__title" id="panel-title">{% block error_title %}{% endblock %}</h1>
+    <p class="panel__lead">{% block error_description %}{% endblock %}</p>
+  </header>
+  <div class="panel__actions">
+    <a class="button button--primary" href="{% url 'home' %}">Volver al catálogo</a>
+  </div>
+{% endblock %}

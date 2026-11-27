@@ -1,6 +1,6 @@
 # Adult Content Platform (SoplaX)
 
-A lightweight adult content platform built with **Django** and styled with a native CSS design system (no CSS frameworks).  
+A lightweight adult content platform built with **Django** and native CSS.
 The platform delivers videos hosted on **AWS S3**. Third-party advertising is paused.
 
 ---
@@ -8,7 +8,7 @@ The platform delivers videos hosted on **AWS S3**. Third-party advertising is pa
 ## 🚀 Features
 
 - **Django Backend** for content management and routing.  
-- **Native design system** (CSS custom properties, Grid, Flexbox and vanilla JS) for a responsive, mobile-first front-end.  
+- **Responsive UI** with shared Django templates, cascade layers, CSS design tokens, and native controls.
 - **Video Hosting with AWS S3** for scalable and secure storage.  
 - **Email verification and password recovery** with expiring links.
 - **Lightweight Architecture** designed for easy deployment and maintenance.  
@@ -18,9 +18,11 @@ The platform delivers videos hosted on **AWS S3**. Third-party advertising is pa
 ## 🛠️ Tech Stack
 
 - **Backend**: Django (Python)  
-- **Frontend**: Django Templates, native CSS (cascade layers + custom properties), vanilla JavaScript  
+- **Frontend**: Django Templates, HTML, CSS, and native JavaScript
 - **Storage**: AWS S3  
 - **Database**: SQLite (development) / PostgreSQL (production)
+
+Read the [SoplaX design rules](docs/system-design-rules.md) before working on the frontend.
 
 ---
 

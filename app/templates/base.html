@@ -3,14 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="6a97888e-site-verification" content="7e6dfb790e95fb5a5921d00a587fd160">
   <title>{% block title %}SoplaX{% endblock %}</title>
   <meta name="description" content="{% block description %}SoplaX: entretenimiento para adultos en streaming.{% endblock %}">
   <meta name="theme-color" content="#0D0B13">
   <meta name="color-scheme" content="dark">
-  <link rel="icon" href="{% static 'images/logo.png' %}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&amp;display=swap">
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
   <link rel="stylesheet" href="{% static 'css/layout.css' %}">
@@ -33,7 +31,7 @@
   <main id="contenido" class="site-main" tabindex="-1">
     {% block content %}{% endblock %}
   </main>
-  {% include "partials/footer.html" %}
+  {% block footer %}{% include "partials/footer.html" %}{% endblock %}
   {% include "partials/age_gate.html" %}
 </body>
 </html>

@@ -25,6 +25,7 @@ COPY --from=builder /opt/soplax /opt/soplax
 COPY manage.py ./
 COPY project/ ./project/
 COPY app/ ./app/
+COPY templates/ ./templates/
 COPY static/ ./static/
 
 USER soplax

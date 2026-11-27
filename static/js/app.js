@@ -47,6 +47,25 @@ if (accountMenu && accountTrigger && typeof accountMenu.showPopover === "functio
       placeMenu();
     }
   });
+
+  const actions = [...accountMenu.querySelectorAll(".menu__item")];
+  const navigateMenu = (event) => {
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") {
+      return;
+    }
+    event.preventDefault();
+    if (!accountMenu.matches(":popover-open")) {
+      accountTrigger.click();
+    }
+    const current = actions.indexOf(document.activeElement);
+    let next = current + 1;
+    if (event.key === "ArrowUp") {
+      next = current === -1 ? actions.length - 1 : current - 1;
+    }
+    actions[Math.max(0, Math.min(next, actions.length - 1))]?.focus();
+  };
+  accountTrigger.addEventListener("keydown", navigateMenu);
+  accountMenu.addEventListener("keydown", navigateMenu);
 }
 
 // Miniaturas: detiene el skeleton cuando la imagen termina de cargar.

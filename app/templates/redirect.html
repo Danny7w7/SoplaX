@@ -1,33 +1,30 @@
 {% extends "panel_base.html" %}
 {% load static %}
 
-{% block page_title %}Tutorial{% endblock %}
+{% block page_title %}Acceso desde TikTok{% endblock %}
+{% block header %}{% include "partials/header_minimal.html" with unlinked_brand=True %}{% endblock %}
+{% block footer %}{% include "partials/footer.html" with credit_only=True %}{% endblock %}
 {% block scripts %}<script src="{% static 'js/redirect.js' %}" defer></script>{% endblock %}
 {% block panel_class %} panel--wide{% endblock %}
+
 {% block panel %}
   <header class="panel__header">
-    <p class="eyebrow"><span class="x-glyph" aria-hidden="true"></span>Desde TikTok</p>
-    <h1 class="panel__title" id="panel-title">Tutorial</h1>
+    <h1 class="panel__title" id="panel-title">Acceso desde TikTok</h1>
+    <p class="panel__lead">Muestra el enlace de SoplaX y cópialo para abrirlo en el navegador de tu dispositivo.</p>
   </header>
-  <div class="prose">
-    <p>Estimado usuario de TikTok:</p>
-    <p>En nombre de todo el equipo de SoplaX, queremos disculparnos sinceramente por las limitaciones que las políticas de TikTok imponen en cuanto a la redirección a nuestra página de contenido. Lamentablemente, no podemos proporcionar enlaces directos en nuestras publicaciones, pero estamos comprometidos en brindarles contenido valioso y de alta calidad de todas formas.</p>
-    <p>Agradecemos su comprensión y le pedimos que entre al siguiente enlace para ofrecerle contenido audiovisual exquisito en esta plataforma.</p>
-    <p>Atentamente,<br>El equipo SoplaX</p>
-  </div>
   <div class="link-reveal">
-    <button class="button button--primary button--block button--lg" type="button" id="startButton">Clic aquí para obtener el enlace</button>
-    <div class="countdown" id="countdown" tabindex="-1" hidden>
+    <button class="button button--primary button--block button--lg" type="button" id="startButton">Mostrar enlace</button>
+    <div class="countdown" id="countdown" role="timer" aria-label="Tiempo restante para mostrar el enlace" tabindex="-1" hidden>
       <svg class="countdown__ring" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
         <circle class="countdown__track" cx="24" cy="24" r="21"></circle>
         <circle class="countdown__progress" cx="24" cy="24" r="21" pathLength="100"></circle>
       </svg>
-      <span class="countdown__value" id="countdownValue" aria-hidden="true">5</span>
+      <span class="countdown__value" id="countdownValue">5</span>
     </div>
     <div class="link-reveal__result" id="linkContainer" hidden>
       <label class="visually-hidden" for="copiableInput">Enlace de SoplaX</label>
       <input class="input" type="text" id="copiableInput" value="{{ public_base_url }}" readonly>
-      <button class="button" type="button" id="copyButton">Copiar</button>
+      <button class="button" type="button" id="copyButton">Copiar enlace</button>
     </div>
     <p class="link-reveal__status" id="linkStatus" role="status"></p>
   </div>

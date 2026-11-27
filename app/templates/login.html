@@ -12,8 +12,8 @@
     {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
     <button class="button button--primary button--block button--lg" type="submit">Entrar</button>
   </form>
-  <div class="panel__links">
+  <nav class="panel__links" aria-label="Opciones de cuenta">
     <a href="{% url 'recover' %}">¿Olvidaste tu contraseña?</a>
     <a href="{% url 'register' %}">Crear cuenta</a>
-  </div>
+  </nav>
 {% endblock %}

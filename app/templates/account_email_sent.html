@@ -7,7 +7,5 @@
     <h1 class="panel__title" id="panel-title">Revisa tu correo</h1>
     <p class="panel__lead">Si la dirección puede recibir un enlace para esta solicitud, te lo enviaremos en breve.</p>
   </header>
-  <div class="panel__links">
-    <a href="{% url 'login' %}">Volver al inicio de sesión</a>
-  </div>
+  <a class="button button--primary button--block button--lg" href="{% url 'login' %}">Volver al inicio de sesión</a>
 {% endblock %}

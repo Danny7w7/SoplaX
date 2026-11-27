@@ -7,13 +7,13 @@
     <h1 class="panel__title" id="panel-title">Completar registro</h1>
   </header>
   {% if form %}
-  <form class="form" method="post" data-loading>
-    {% csrf_token %}
-    {% include "partials/form_fields.html" %}
-    <button class="button button--primary button--block button--lg" type="submit">Crear cuenta</button>
-  </form>
+    <form class="form" method="post" data-loading>
+      {% csrf_token %}
+      {% include "partials/form_fields.html" %}
+      <button class="button button--primary button--block button--lg" type="submit">Crear cuenta</button>
+    </form>
   {% else %}
-  <p class="panel__lead">El enlace de registro no está disponible.</p>
-  <a class="button button--primary button--block" href="{% url 'register' %}">Solicitar un enlace nuevo</a>
+    <p class="form-alert">El enlace de registro no está disponible.</p>
+    <a class="button button--primary button--block" href="{% url 'register' %}">Solicitar un enlace nuevo</a>
   {% endif %}
 {% endblock %}

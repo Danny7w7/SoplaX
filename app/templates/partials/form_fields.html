@@ -1,20 +1,22 @@
-{% if form.non_field_errors %}
-<div class="form-alert" role="alert">
-  {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
-</div>
-{% endif %}
-{% for field in form.hidden_fields %}{{ field }}{% endfor %}
-{% for field in form.visible_fields %}
-<div class="field{% if field.errors %} field--invalid{% endif %}">
-  <label class="field__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-  <div class="field__control">{{ field }}</div>
-  {% if field.help_text %}
-  <div class="field__help" id="{{ field.auto_id }}_helptext">{{ field.help_text|safe }}</div>
+{% with form_context=form.get_context %}
+  {% if form_context.errors %}
+    <div class="form-alert" role="alert">
+      {% for error in form_context.errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
   {% endif %}
-  {% if field.errors %}
-  <ul class="field__errors" role="list">
-    {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
-  </ul>
-  {% endif %}
-</div>
-{% endfor %}
+  {% for field in form_context.hidden_fields %}{{ field }}{% endfor %}
+  {% for field, errors in form_context.fields %}
+    <div class="field{% if errors %} field--invalid{% endif %}">
+      <label class="field__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+      <div class="field__control">{{ field }}</div>
+      {% if field.help_text %}
+        <div class="field__help"{% if field.auto_id %} id="{{ field.auto_id }}_helptext"{% endif %}>{{ field.help_text|safe }}</div>
+      {% endif %}
+      {% if errors %}
+        <ul class="field__errors" role="list"{% if field.auto_id %} id="{{ field.auto_id }}_error"{% endif %}>
+          {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+  {% endfor %}
+{% endwith %}

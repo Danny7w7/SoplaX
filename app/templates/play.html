@@ -7,17 +7,18 @@
 {% block scripts %}<script src="{% static 'js/play.js' %}" defer></script>{% endblock %}
 
 {% block content %}
+{% if video.miniatura %}{% firstof video.miniatura.url as poster_url %}{% endif %}
 <section class="theater" aria-label="Reproductor">
-  {% if video.miniatura %}
-  <div class="theater__ambient" aria-hidden="true"><img alt="" src="{{ video.miniatura.url }}"></div>
-  {% endif %}
   <div class="player">
     <video id="my-video" class="player__video" controls controlslist="nodownload" playsinline preload="metadata"
-           {% if video.miniatura %}poster="{{ video.miniatura.url }}"{% endif %}>
+           aria-labelledby="video-title"{% if poster_url %} poster="{{ poster_url }}"{% endif %}>
       <source src="{{ video.video.url }}" type="video/mp4">
       Tu navegador no puede reproducir este video.
     </video>
   </div>
+  {% if poster_url %}
+  <div class="theater__ambient" aria-hidden="true"><img src="{{ poster_url }}" alt="" decoding="async"></div>
+  {% endif %}
 </section>
 
 <article class="watch container" aria-labelledby="video-title">

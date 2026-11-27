@@ -95,6 +95,13 @@
     transition: transform var(--duration-slow) var(--ease-standard);
   }
 
+  .hero__poster--placeholder {
+    display: grid;
+    place-items: center;
+    color: var(--color-text-muted);
+    font-size: var(--text-3xl);
+  }
+
   @media (hover: hover) and (prefers-reduced-motion: no-preference) {
     .hero__poster:hover img {
       transform: scale(1.03);
@@ -149,5 +156,21 @@
     color: var(--color-text-muted);
     font-size: var(--text-sm);
     font-variant-numeric: tabular-nums;
+  }
+
+  .video-card__media--placeholder::before {
+    content: none;
+  }
+
+  .video-card__media--placeholder .video-card__play {
+    background: var(--color-surface-raised);
+    color: var(--color-text);
+    opacity: 1;
+    transform: none;
+  }
+
+  .video-card__link:is(:hover, :focus-visible) .video-card__media--placeholder .video-card__play {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
   }
 }

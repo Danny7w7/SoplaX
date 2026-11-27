@@ -5,18 +5,14 @@
 {% block styles %}<link rel="stylesheet" href="{% static 'css/pages/home.css' %}">{% endblock %}
 
 {% block content %}
-{% static 'images/miniaturatemporal.png' as default_thumbnail %}
-
 {% if not query %}
 <h1 class="visually-hidden">Catálogo de SoplaX</h1>
 {% endif %}
 
 {% if not query and page.number == 1 and page.paginator.count %}
+{% if page.0.miniatura %}{% firstof page.0.miniatura.url as featured_thumbnail %}{% endif %}
 {% with featured=page.0 %}
 <section class="hero" aria-labelledby="hero-title">
-  <div class="hero__backdrop" aria-hidden="true">
-    <img alt="" src="{% if featured.miniatura %}{{ featured.miniatura.url }}{% else %}{{ default_thumbnail }}{% endif %}">
-  </div>
   <div class="container hero__inner">
     <div class="hero__content">
       <p class="eyebrow"><span class="x-glyph" aria-hidden="true"></span>Destacado</p>
@@ -31,11 +27,18 @@
         <span class="hero__meta">{{ featured.visitas|vistas }}</span>
       </div>
     </div>
-    <a class="hero__poster" href="{% url 'play' id=featured.id %}" tabindex="-1" aria-hidden="true">
-      <img alt="" width="1280" height="720" fetchpriority="high" decoding="async"
-           src="{% if featured.miniatura %}{{ featured.miniatura.url }}{% else %}{{ default_thumbnail }}{% endif %}">
+    <a class="hero__poster{% if not featured_thumbnail %} hero__poster--placeholder{% endif %}"
+       href="{% url 'play' id=featured.id %}" aria-label="Reproducir {{ featured.nombre }}">
+      {% if featured_thumbnail %}
+      <img src="{{ featured_thumbnail }}" alt="" width="1280" height="720" fetchpriority="high" decoding="async">
+      {% else %}
+      <span class="icon-play" aria-hidden="true"></span>
+      {% endif %}
     </a>
   </div>
+  {% if featured_thumbnail %}
+  <div class="hero__backdrop" aria-hidden="true"><img src="{{ featured_thumbnail }}" alt="" decoding="async"></div>
+  {% endif %}
 </section>
 {% endwith %}
 {% endif %}
