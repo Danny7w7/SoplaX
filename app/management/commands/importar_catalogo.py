@@ -16,7 +16,7 @@ CATALOG_LABELS = {model._meta.label_lower for model in CATALOG_MODELS}
 VIDEO_RELATIONS = {"actores": Actor, "categorias": Categoria, "posturas": Postura}
 
 
-def read_catalog(path):
+def load_catalog_rows(path):
     try:
         with path.open(encoding="utf-8-sig") as fixture:
             rows = json.load(fixture)
@@ -33,7 +33,10 @@ def read_catalog(path):
         for row in rows
     ):
         raise CommandError("El archivo debe contener únicamente registros del catálogo de SoplaX.")
+    return rows
 
+
+def parse_catalog_rows(rows):
     catalog = {model: {} for model in CATALOG_MODELS}
     try:
         for entry in serializers.deserialize("python", rows):
@@ -63,7 +66,11 @@ def read_catalog(path):
     return catalog
 
 
-def plan_import(catalog):
+def read_catalog(path):
+    return parse_catalog_rows(load_catalog_rows(path))
+
+
+def plan_classifications(catalog):
     ids_by_name = {}
     missing = []
     for model in CLASSIFICATIONS:
@@ -71,7 +78,11 @@ def plan_import(catalog):
         found = dict(model.objects.filter(nombre__in=names).values_list("nombre", "pk"))
         ids_by_name[model] = found
         missing.extend((model, name) for name in names if name not in found)
+    return ids_by_name, missing
 
+
+def plan_import(catalog):
+    ids_by_name, missing = plan_classifications(catalog)
     pending = []
     for entry in catalog[Videos].values():
         key = entry.object.video.name
@@ -83,21 +94,29 @@ def plan_import(catalog):
     return ids_by_name, missing, pending
 
 
+def lock_video_catalog():
+    if connection.vendor == "postgresql":
+        # Serializa el plan y la escritura porque la clave del video no es única en el esquema.
+        table = connection.ops.quote_name(Videos._meta.db_table)
+        with connection.cursor() as cursor:
+            cursor.execute(f"LOCK TABLE {table} IN SHARE ROW EXCLUSIVE MODE")
+
+
+def create_classifications(ids_by_name, missing):
+    created = []
+    for model, name in missing:
+        classification, was_created = model.objects.get_or_create(nombre=name)
+        ids_by_name[model][name] = classification.pk
+        if was_created:
+            created.append((model, name))
+    return created
+
+
 def apply_import(catalog):
     with transaction.atomic():
-        if connection.vendor == "postgresql":
-            # Serializa el plan y la inserción porque la clave del video no es única en el esquema.
-            table = connection.ops.quote_name(Videos._meta.db_table)
-            with connection.cursor() as cursor:
-                cursor.execute(f"LOCK TABLE {table} IN SHARE ROW EXCLUSIVE MODE")
-
+        lock_video_catalog()
         ids_by_name, missing, pending = plan_import(catalog)
-        created = []
-        for model, name in missing:
-            classification, was_created = model.objects.get_or_create(nombre=name)
-            ids_by_name[model][name] = classification.pk
-            if was_created:
-                created.append((model, name))
+        created = create_classifications(ids_by_name, missing)
 
         target_ids = {
             model: {
