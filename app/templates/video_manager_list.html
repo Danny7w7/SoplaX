@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Biblioteca de videos · SoplaX{% endblock %}
+{% block description %}Gestiona los videos publicados en SoplaX.{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{% static 'css/pages/video-manager.css' %}">{% endblock %}
+{% block header %}{% include "partials/header_minimal.html" %}{% endblock %}
+{% block body_class %}page-video-manager{% endblock %}
+{% block age_gate %}{% endblock %}
+
+{% block content %}
+<div class="video-manager container">
+  <header class="video-manager__header">
+    <div>
+      <p class="eyebrow">SOPLAX STUDIO</p>
+      <h1 class="video-manager__title">Biblioteca de videos</h1>
+      <p class="video-manager__lead">Administra el contenido y su clasificación desde un solo lugar.</p>
+    </div>
+    {% if can_add %}
+    <a class="button button--primary" href="{% url 'video_manager_add' %}">
+      <span aria-hidden="true">+</span> Agregar video
+    </a>
+    {% endif %}
+  </header>
+
+  <section class="video-manager__stats" aria-label="Resumen de la biblioteca">
+    <div class="video-manager__stat">
+      <span class="video-manager__stat-label">Videos publicados</span>
+      <strong>{{ total_videos }}</strong>
+    </div>
+    <div class="video-manager__stat">
+      <span class="video-manager__stat-label">Reproducciones acumuladas</span>
+      <strong>{{ total_visits }}</strong>
+    </div>
+  </section>
+
+  <section class="video-manager__library" aria-labelledby="library-title">
+    <div class="video-manager__library-head">
+      <div>
+        <h2 id="library-title">Todos los videos</h2>
+        <p>{{ page.paginator.count }} resultado{% if page.paginator.count != 1 %}s{% endif %}</p>
+      </div>
+      <form class="video-manager__search" method="get" action="{% url 'video_manager' %}" role="search">
+        <label class="visually-hidden" for="video-search">Buscar videos</label>
+        <input class="input" id="video-search" type="search" name="q" value="{{ query }}"
+               placeholder="Título, descripción o clasificación" maxlength="100">
+        {% if query %}<a class="button button--ghost button--sm" href="{% url 'video_manager' %}">Limpiar</a>{% endif %}
+        <button class="button button--secondary button--sm" type="submit">Buscar</button>
+      </form>
+    </div>
+
+    {% if videos %}
+    <div class="video-manager__list">
+      {% for managed_video in videos %}
+      <article class="video-manager__row">
+        <a class="video-manager__thumb" href="{% url 'play' managed_video.pk %}" aria-label="Ver {{ managed_video.nombre }}">
+          {% if managed_video.miniatura %}
+          <img src="{{ managed_video.miniatura.url }}" alt="Miniatura de {{ managed_video.nombre }}" loading="lazy">
+          {% else %}
+          <span class="icon-play" aria-hidden="true"></span>
+          {% endif %}
+          <span class="video-manager__duration" aria-hidden="true">▶</span>
+        </a>
+        <div class="video-manager__details">
+          <div class="video-manager__copy">
+            <div class="video-manager__title-line">
+              <h3>{{ managed_video.nombre }}</h3>
+              {% if managed_video.es_premium %}
+              <span class="video-manager__tier video-manager__tier--premium">Premium</span>
+              {% else %}
+              <span class="video-manager__tier">No premium</span>
+              {% endif %}
+            </div>
+            <p>{{ managed_video.descripcion|truncatechars:180 }}</p>
+            <ul class="video-manager__meta" role="list">
+              <li>{{ managed_video.visitas }} reproducciones</li>
+              {% if managed_video.idioma %}<li>{{ managed_video.idioma.nombre }}</li>{% endif %}
+              {% with categories=managed_video.categorias.all %}
+                {% if categories %}<li>{{ categories|join:", " }}</li>{% endif %}
+              {% endwith %}
+            </ul>
+          </div>
+          <div class="video-manager__actions" aria-label="Acciones para {{ managed_video.nombre }}">
+            <a class="button button--secondary button--sm" href="{% url 'play' managed_video.pk %}">Ver</a>
+            {% if can_change %}
+            <a class="button button--ghost button--sm" href="{% url 'video_manager_edit' managed_video.pk %}">Editar</a>
+            {% endif %}
+            {% if can_delete %}
+            <a class="button button--danger button--sm" href="{% url 'video_manager_delete' managed_video.pk %}">Eliminar</a>
+            {% endif %}
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+
+    {% if page.has_other_pages %}
+    <nav class="pagination" aria-label="Paginación de videos">
+      {% if page.has_previous %}
+      <a class="button button--secondary button--sm" href="?q={{ query|urlencode }}&amp;page={{ page.previous_page_number }}">Anterior</a>
+      {% endif %}
+      <span class="pagination__status">Página <strong>{{ page.number }}</strong> de {{ page.paginator.num_pages }}</span>
+      {% if page.has_next %}
+      <a class="button button--secondary button--sm" href="?q={{ query|urlencode }}&amp;page={{ page.next_page_number }}">Siguiente</a>
+      {% endif %}
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+      <span class="x-glyph x-glyph--lg" aria-hidden="true"></span>
+      <h3 class="empty-state__title">{% if query %}No encontramos videos{% else %}Tu biblioteca está vacía{% endif %}</h3>
+      <p>{% if query %}Prueba con otra búsqueda.{% else %}Agrega el primer video para comenzar a organizar el catálogo.{% endif %}</p>
+      {% if not query and can_add %}<a class="button button--primary" href="{% url 'video_manager_add' %}">Agregar video</a>{% endif %}
+    </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

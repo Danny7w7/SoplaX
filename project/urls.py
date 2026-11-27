@@ -9,6 +9,15 @@ from app.forms import EmailLoginForm
 
 
 urlpatterns = [
+    path("admin/videos/", views.video_manager, name="video_manager"),
+    path("admin/videos/nuevo/", views.video_manager_add, name="video_manager_add"),
+    path("admin/videos/<int:video_id>/editar/", views.video_manager_edit, name="video_manager_edit"),
+    path(
+        "admin/videos/<int:video_id>/miniatura/descargar/",
+        views.video_manager_thumbnail_download,
+        name="video_manager_thumbnail_download",
+    ),
+    path("admin/videos/<int:video_id>/eliminar/", views.video_manager_delete, name="video_manager_delete"),
     path("admin/", admin.site.urls),
     path("", views.index, name="home"),
     path("register/", views.register, name="register"),

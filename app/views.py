@@ -1,14 +1,21 @@
 import logging
+from pathlib import PurePosixPath
 from urllib.parse import urlencode
+from uuid import uuid4
 
+from botocore.exceptions import BotoCoreError, ClientError
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import PasswordResetConfirmView
+from django.core.exceptions import PermissionDenied
+from django.core.files.base import ContentFile
 from django.core.paginator import Paginator
-from django.db import IntegrityError, transaction
-from django.db.models import Count, F, Value
+from django.db import DatabaseError, IntegrityError, router, transaction
+from django.db.models import Count, F, Q, Sum, Value
 from django.db.models.functions import Replace
-from django.http import Http404
+from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -22,6 +29,7 @@ from .account_mail import queue_account_email, send_password_reset_email, send_r
 from .forms import AccountEmailForm, AccountSetPasswordForm, RegistrationForm
 from .middleware import auth_service_unavailable
 from .models import RegistroPendiente, Usuario, Videos
+from .video_uploads import VideoManagementForm, VideoUploadForm, store_video_uploads, thumbnail_webp_content
 
 
 logger = logging.getLogger(__name__)
@@ -60,6 +68,251 @@ def index(request):
             "page": page,
             "query": query,
         },
+    )
+
+
+def video_permission(action):
+    def check_permission(user):
+        if not user.is_active or not user.is_staff:
+            raise PermissionDenied
+        if user.is_superuser:
+            return True
+        if action == "view":
+            allowed = user.has_perm("app.view_videos") or user.has_perm("app.change_videos")
+        else:
+            allowed = user.has_perm(f"app.{action}_videos")
+        if not allowed:
+            raise PermissionDenied
+        return True
+
+    return user_passes_test(check_permission)
+
+
+def can_view_video_manager(user):
+    return user.is_active and user.is_staff and (
+        user.is_superuser or user.has_perm("app.view_videos") or user.has_perm("app.change_videos")
+    )
+
+
+def video_assets(video):
+    assets = []
+    for field_name in ("video", "miniatura"):
+        asset = getattr(video, field_name)
+        if asset and asset.name:
+            assets.append((asset.storage, asset.name))
+    return assets
+
+
+def delete_unreferenced_video_assets(assets, *, using=None):
+    failed = []
+    deleted = set()
+    using = using or router.db_for_write(Videos)
+    for storage, name in assets:
+        identity = (id(storage), name)
+        if not name or identity in deleted:
+            continue
+        deleted.add(identity)
+        try:
+            still_referenced = Videos.objects.using(using).filter(Q(video=name) | Q(miniatura=name)).exists()
+        except DatabaseError:
+            logger.exception("No se pudo comprobar si el archivo sigue vinculado: %s", name)
+            failed.append(name)
+            continue
+        if still_referenced:
+            continue
+        try:
+            storage.delete(name)
+        except Exception:
+            logger.exception("No se pudo eliminar el archivo asociado al video: %s", name)
+            failed.append(name)
+    return failed
+
+
+@require_GET
+@login_required
+@video_permission("view")
+def video_manager(request):
+    query = request.GET.get("q", "").strip()[:100]
+    videos = Videos.objects.select_related("idioma").prefetch_related("categorias").order_by("-pk")
+    if query:
+        videos = videos.filter(
+            Q(nombre__icontains=query)
+            | Q(descripcion__icontains=query)
+            | Q(categorias__nombre__icontains=query)
+            | Q(actores__nombre__icontains=query)
+            | Q(idioma__nombre__icontains=query)
+            | Q(posturas__nombre__icontains=query)
+        ).distinct()
+
+    page = Paginator(videos, 20).get_page(request.GET.get("page"))
+    totals = Videos.objects.aggregate(total=Count("pk"), visits=Sum("visitas"))
+    return render(
+        request,
+        "video_manager_list.html",
+        {
+            "videos": page.object_list,
+            "page": page,
+            "query": query,
+            "total_videos": totals["total"],
+            "total_visits": totals["visits"] or 0,
+            "can_add": request.user.is_superuser or request.user.has_perm("app.add_videos"),
+            "can_change": request.user.is_superuser or request.user.has_perm("app.change_videos"),
+            "can_delete": request.user.is_superuser or request.user.has_perm("app.delete_videos"),
+        },
+    )
+
+
+@require_http_methods(["GET", "HEAD", "POST"])
+@login_required
+@video_permission("add")
+def video_manager_add(request):
+    form = VideoUploadForm(request.POST or None, request.FILES or None)
+    if request.method == "POST" and form.is_valid():
+        video = form.save(commit=False)
+        video.visitas = 0
+        using = router.db_for_write(Videos)
+        try:
+            with store_video_uploads(video):
+                with transaction.atomic(using=using):
+                    video.save(using=using)
+                    form.save_m2m()
+        except (DatabaseError, OSError, BotoCoreError, ClientError):
+            logger.exception("No se pudo crear un video desde el panel propio.")
+            form.add_error(None, "No se pudo guardar el video. Vuelve a seleccionar los archivos.")
+        else:
+            messages.success(request, f"Se agregó «{video.nombre}» a la biblioteca.")
+            return redirect("video_manager" if can_view_video_manager(request.user) else "video_manager_add")
+
+    return render(
+        request,
+        "video_manager_form.html",
+        {
+            "form": form,
+            "managed_video": None,
+            "is_editing": False,
+            "can_view_videos": can_view_video_manager(request.user),
+        },
+    )
+
+
+@require_http_methods(["GET", "HEAD", "POST"])
+@login_required
+@video_permission("change")
+def video_manager_edit(request, video_id):
+    using = router.db_for_write(Videos)
+    video = get_object_or_404(Videos.objects.using(using), pk=video_id)
+    current_assets = {
+        field_name: (getattr(video, field_name).storage, getattr(video, field_name).name)
+        for field_name in ("video", "miniatura")
+        if getattr(video, field_name) and getattr(video, field_name).name
+    }
+    original_premium = video.es_premium
+    form = VideoManagementForm(request.POST or None, request.FILES or None, instance=video)
+    if request.method == "POST" and form.is_valid():
+        uploaded_fields = list(
+            field_name
+            for field_name in ("video", "miniatura")
+            if form.files.get(form.add_prefix(field_name))
+        )
+        thumbnail_related = "miniatura" in uploaded_fields or (
+            form.cleaned_data["es_premium"] != original_premium and "miniatura" in current_assets
+        )
+        old_assets = [current_assets[field_name] for field_name in uploaded_fields if field_name in current_assets]
+        try:
+            video = form.save(commit=False)
+            if video.es_premium != original_premium and "miniatura" not in uploaded_fields and "miniatura" in current_assets:
+                storage, old_name = current_assets["miniatura"]
+                with storage.open(old_name, "rb") as thumbnail:
+                    webp = thumbnail_webp_content(thumbnail.read())
+                replacement = ContentFile(webp, name=f"{uuid4().hex}.webp")
+                replacement.content_type = "image/webp"
+                video.miniatura = replacement
+                uploaded_fields.append("miniatura")
+                old_assets.append(current_assets["miniatura"])
+            with store_video_uploads(video, fields=uploaded_fields):
+                with transaction.atomic(using=using):
+                    video.save(using=using)
+                    form.save_m2m()
+        except (DatabaseError, OSError, BotoCoreError, ClientError, ValueError):
+            logger.exception("No se pudo actualizar el video %s desde el panel propio.", video_id)
+            form.add_error(
+                "miniatura" if thumbnail_related else None,
+                "No se pudo guardar el video. Vuelve a seleccionar los archivos.",
+            )
+        else:
+            failed = delete_unreferenced_video_assets(old_assets, using=using)
+            if failed:
+                messages.warning(
+                    request,
+                    "El video se guardó, pero no se pudieron retirar todos los archivos reemplazados de S3.",
+                )
+            else:
+                messages.success(request, f"Se guardaron los cambios de «{video.nombre}».")
+            return redirect("video_manager")
+
+    return render(
+        request,
+        "video_manager_form.html",
+        {
+            "form": form,
+            "managed_video": get_object_or_404(Videos.objects.using(using), pk=video_id),
+            "is_editing": True,
+            "can_view_videos": can_view_video_manager(request.user),
+        },
+    )
+
+
+@never_cache
+@require_safe
+@login_required
+@video_permission("change")
+def video_manager_thumbnail_download(request, video_id):
+    using = router.db_for_write(Videos)
+    video = get_object_or_404(Videos.objects.using(using), pk=video_id)
+    if not video.miniatura:
+        raise Http404("Este video no tiene miniatura.")
+    try:
+        thumbnail = video.miniatura.open("rb")
+    except (BotoCoreError, ClientError, OSError):
+        logger.exception("No se pudo abrir la miniatura del video %s.", video_id)
+        raise Http404("La miniatura no está disponible.")
+    return FileResponse(
+        thumbnail,
+        as_attachment=True,
+        filename=PurePosixPath(video.miniatura.name).name,
+    )
+
+
+@require_http_methods(["GET", "HEAD", "POST"])
+@login_required
+@video_permission("delete")
+def video_manager_delete(request, video_id):
+    using = router.db_for_write(Videos)
+    video = get_object_or_404(Videos.objects.using(using), pk=video_id)
+    if request.method == "POST":
+        title = video.nombre
+        assets = video_assets(video)
+        try:
+            with transaction.atomic(using=using):
+                video.delete(using=using)
+        except DatabaseError:
+            logger.exception("No se pudo eliminar el video %s desde el panel propio.", video_id)
+            messages.error(request, "No se pudo eliminar el video. Inténtalo de nuevo.")
+        else:
+            failed = delete_unreferenced_video_assets(assets, using=using)
+            if failed:
+                messages.warning(
+                    request,
+                    f"Se eliminó «{title}», pero no se pudieron retirar todos sus archivos de S3.",
+                )
+            else:
+                messages.success(request, f"Se eliminó «{title}» y sus archivos asociados.")
+        return redirect("video_manager" if can_view_video_manager(request.user) else "admin:index")
+
+    return render(
+        request,
+        "video_manager_delete.html",
+        {"managed_video": video, "can_view_videos": can_view_video_manager(request.user)},
     )
 
 

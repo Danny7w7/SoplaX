@@ -31,6 +31,9 @@
         <h2 id="upload-details">Detalles del video</h2>
         {% include "admin/video_upload_field.html" with field=form.nombre only %}
         {% include "admin/video_upload_field.html" with field=form.descripcion only %}
+        <div class="video-upload__premium">
+          {% include "admin/video_upload_field.html" with field=form.es_premium only %}
+        </div>
 
         <details class="video-upload__classification"{% if form.idioma.errors or form.categorias.errors or form.actores.errors or form.posturas.errors %} open{% endif %}>
           <summary>Clasificación (opcional)</summary>

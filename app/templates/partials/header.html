@@ -26,9 +26,12 @@
         </div>
         <ul class="menu__list" role="list">
           {% if user.is_staff %}
-          <li><a class="menu__item" href="{% url 'admin:index' %}">Menú administrador</a></li>
-          {% if perms.app.add_videos %}
-          <li><a class="menu__item" href="{% url 'admin:app_videos_add' %}">Subir video</a></li>
+          {% if user.is_superuser or perms.app.view_videos or perms.app.change_videos %}
+          <li><a class="menu__item" href="{% url 'video_manager' %}">Panel de administración</a></li>
+          {% elif perms.app.add_videos %}
+          <li><a class="menu__item" href="{% url 'video_manager_add' %}">Panel de administración</a></li>
+          {% else %}
+          <li><a class="menu__item" href="{% url 'admin:index' %}">Panel de administración</a></li>
           {% endif %}
           {% endif %}
           <li>

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if is_editing %}Editar video{% else %}Agregar video{% endif %} · SoplaX{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{% static 'css/pages/video-manager.css' %}">{% endblock %}
+{% block header %}{% include "partials/header_minimal.html" %}{% endblock %}
+{% block body_class %}page-video-manager{% endblock %}
+{% block age_gate %}{% endblock %}
+
+{% block content %}
+<div class="video-manager container video-manager--form-page">
+  <header class="video-manager__header video-manager__header--form">
+    <div>
+      {% if can_view_videos %}
+      <a class="back-link" href="{% url 'video_manager' %}"><span aria-hidden="true">←</span> Biblioteca de videos</a>
+      {% else %}
+      <a class="back-link" href="{% url 'admin:index' %}"><span aria-hidden="true">←</span> Administración</a>
+      {% endif %}
+      <p class="eyebrow">SOPLAX STUDIO</p>
+      <h1 class="video-manager__title">{% if is_editing %}Editar video{% else %}Agregar video{% endif %}</h1>
+      <p class="video-manager__lead">{% if is_editing %}Actualiza los detalles, la clasificación o los archivos.{% else %}Completa los detalles y selecciona los archivos para publicar.{% endif %}</p>
+    </div>
+    {% if is_editing %}
+    <a class="button button--secondary" href="{% url 'play' managed_video.pk %}">Ver video</a>
+    {% endif %}
+  </header>
+
+  <form class="video-manager__form form" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <div class="form-alert" role="alert">
+      {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="video-manager__form-grid">
+      <section class="video-manager__card" aria-labelledby="video-details-title">
+        <h2 id="video-details-title">Detalles del video</h2>
+        {% include "admin/video_upload_field.html" with field=form.nombre only %}
+        {% include "admin/video_upload_field.html" with field=form.descripcion only %}
+        <div class="video-manager__premium">
+          {% include "admin/video_upload_field.html" with field=form.es_premium only %}
+        </div>
+
+        <details class="video-manager__classification"{% if form.idioma.errors or form.categorias.errors or form.actores.errors or form.posturas.errors %} open{% endif %}>
+          <summary>Clasificación</summary>
+          <div class="video-manager__classification-fields">
+            {% include "admin/video_upload_field.html" with field=form.idioma only %}
+            {% include "admin/video_upload_field.html" with field=form.categorias only %}
+            {% include "admin/video_upload_field.html" with field=form.actores only %}
+            {% include "admin/video_upload_field.html" with field=form.posturas only %}
+          </div>
+        </details>
+      </section>
+
+      <section class="video-manager__card" aria-labelledby="video-assets-title">
+        <h2 id="video-assets-title">Archivos</h2>
+        {% if managed_video %}
+        <div class="video-manager__current-assets">
+          {% if managed_video.miniatura %}
+          <img class="video-manager__current-thumb" src="{{ managed_video.miniatura.url }}" alt="Miniatura actual de {{ managed_video.nombre }}">
+          {% endif %}
+          <div>
+            <p class="video-manager__current-label">Archivos actuales</p>
+            {% if managed_video.video %}<a href="{{ managed_video.video.url }}" target="_blank" rel="noopener">Abrir video actual</a>{% endif %}
+            {% if managed_video.miniatura %}
+            <div class="video-manager__asset-links">
+              <a href="{{ managed_video.miniatura.url }}" target="_blank" rel="noopener">Ver miniatura</a>
+              <a href="{% url 'video_manager_thumbnail_download' managed_video.pk %}">Descargar miniatura</a>
+            </div>
+            <span class="video-manager__current-name">{{ managed_video.miniatura.name|cut:"upload/Miniaturas/" }}</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+        {% include "admin/video_upload_field.html" with field=form.video only %}
+        {% include "admin/video_upload_field.html" with field=form.miniatura only %}
+      </section>
+    </div>
+
+    <div class="video-manager__form-actions">
+      {% if can_view_videos %}
+      <a class="button button--ghost" href="{% url 'video_manager' %}">Cancelar</a>
+      {% else %}
+      <a class="button button--ghost" href="{% url 'admin:index' %}">Cancelar</a>
+      {% endif %}
+      <button class="button button--primary button--lg" type="submit">{% if is_editing %}Guardar cambios{% else %}Agregar video{% endif %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

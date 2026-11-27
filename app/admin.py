@@ -54,8 +54,8 @@ class CatalogoVideoAdmin(admin.ModelAdmin):
 
 @admin.register(Videos)
 class VideosAdmin(admin.ModelAdmin):
-    list_display = ("nombre", "idioma", "visitas")
-    list_filter = ("categorias", "idioma", "posturas")
+    list_display = ("nombre", "es_premium", "idioma", "visitas")
+    list_filter = ("es_premium", "categorias", "idioma", "posturas")
     search_fields = (
         "nombre",
         "descripcion",
@@ -65,6 +65,12 @@ class VideosAdmin(admin.ModelAdmin):
         "posturas__nombre",
     )
     filter_horizontal = ("categorias", "actores", "posturas")
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = list(super().get_readonly_fields(request, obj))
+        if obj is not None:
+            readonly_fields.append("es_premium")
+        return readonly_fields
 
     @method_decorator(require_http_methods(["GET", "HEAD", "POST"]))
     def add_view(self, request, form_url="", extra_context=None):

@@ -33,7 +33,7 @@ class ConvertirMiniaturasWebpTests(TestCase):
         self.storage.save("upload/videos/video.mp4", ContentFile(b"video sintetico"))
 
         self.landscape = self.create_video("Paisaje", self.jpg)
-        self.shared = self.create_video("Miniatura compartida", self.jpg)
+        self.shared = self.create_video("Miniatura compartida", self.jpg, premium=False)
         self.portrait = self.create_video("Retrato", self.png)
         self.existing = self.create_video("WebP existente", self.webp)
         self.empty = self.create_video("Sin miniatura", "")
@@ -52,13 +52,14 @@ class ConvertirMiniaturasWebpTests(TestCase):
             image.save(data, image_format)
             return self.storage.save(name, ContentFile(data.getvalue()))
 
-    def create_video(self, title, thumbnail):
+    def create_video(self, title, thumbnail, *, premium=True):
         return Videos.objects.create(
             nombre=title,
             descripcion="Descripción de prueba",
             miniatura=thumbnail,
             video="upload/videos/video.mp4",
             visitas=42,
+            es_premium=premium,
         )
 
     def database_snapshot(self):
@@ -81,7 +82,7 @@ class ConvertirMiniaturasWebpTests(TestCase):
         return output.getvalue()
 
     def assert_webp(self, name, dimensions, *, transparent=False):
-        self.assertTrue(name.startswith("upload/photos/webp/"))
+        self.assertTrue(name.startswith("upload/Miniaturas/"))
         self.assertTrue(name.endswith(".webp"))
         with self.storage.open(name, "rb") as file, Image.open(file) as image:
             self.assertEqual(image.format, "WEBP")
@@ -109,39 +110,49 @@ class ConvertirMiniaturasWebpTests(TestCase):
 
         self.assertIn(self.jpg, output)
         self.assertIn(self.png, output)
-        self.assertIn("upload/photos/webp/", output)
+        self.assertIn("upload/Miniaturas/Premium/", output)
+        self.assertIn("upload/Miniaturas/NoPremium/", output)
         save.assert_not_called()
         delete.assert_not_called()
         self.assertEqual(self.database_snapshot(), original_rows)
         self.assertEqual(self.storage_snapshot(), original_files)
 
-    def test_aplicar_convierte_miniaturas_y_es_idempotente(self):
+    def test_aplicar_convierte_y_segmenta_miniaturas_y_es_idempotente(self):
         expected_rows = self.database_snapshot()
         original_files = self.storage_snapshot()
 
         self.run_command(aplicar=True)
 
-        for video in (self.landscape, self.shared, self.portrait):
+        for video in (self.landscape, self.shared, self.portrait, self.existing):
             video.refresh_from_db()
         landscape_webp = self.landscape.miniatura.name
+        shared_webp = self.shared.miniatura.name
         portrait_webp = self.portrait.miniatura.name
-        self.assertEqual(self.shared.miniatura.name, landscape_webp)
-        self.assertNotEqual(landscape_webp, portrait_webp)
+        existing_webp = self.existing.miniatura.name
+        self.assertNotEqual(shared_webp, landscape_webp)
         self.assert_webp(landscape_webp, (960, 540))
+        self.assertTrue(landscape_webp.startswith("upload/Miniaturas/Premium/"))
+        self.assert_webp(shared_webp, (960, 540))
+        self.assertTrue(shared_webp.startswith("upload/Miniaturas/NoPremium/"))
         self.assert_webp(portrait_webp, (270, 540), transparent=True)
+        self.assert_webp(existing_webp, (48, 28))
 
         converted = {
             self.landscape.pk: landscape_webp,
-            self.shared.pk: landscape_webp,
+            self.shared.pk: shared_webp,
             self.portrait.pk: portrait_webp,
+            self.existing.pk: existing_webp,
         }
         for row in expected_rows[Videos]:
             row["miniatura"] = converted.get(row["id"], row["miniatura"])
         self.assertEqual(self.database_snapshot(), expected_rows)
         applied_files = self.storage_snapshot()
-        self.assertEqual(set(applied_files) - set(original_files), {landscape_webp, portrait_webp})
-        for name, data in original_files.items():
-            self.assertEqual(applied_files[name], data)
+        self.assertEqual(
+            set(applied_files) - set(original_files),
+            {landscape_webp, shared_webp, portrait_webp, existing_webp},
+        )
+        self.assertEqual(set(original_files) - set(applied_files), {self.jpg, self.png, self.webp})
+        self.assertIn("upload/videos/video.mp4", applied_files)
 
         with patch.object(self.storage, "save", wraps=self.storage.save) as save:
             self.run_command(aplicar=True)

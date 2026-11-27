@@ -25,7 +25,7 @@ class ClasificarVideosTests(TestCase):
             pk=70,
             nombre="Sendero original",
             descripcion="",
-            miniatura="upload/photos/sendero.webp",
+            miniatura="upload/Miniaturas/Premium/sendero.webp",
             video="upload/videos/sendero.mp4",
             visitas=27,
         )

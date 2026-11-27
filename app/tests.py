@@ -254,7 +254,7 @@ class CatalogSecurityTests(TestCase):
         video = Videos.objects.create(
             nombre="Prueba de catálogo",
             descripcion="Video de prueba",
-            miniatura="upload/photos/sample.png",
+            miniatura="upload/Miniaturas/Premium/sample.webp",
             video="upload/videos/sample.mp4",
             visitas=2,
         )
@@ -282,7 +282,7 @@ class FrontendTests(TestCase):
         video = Videos.objects.create(
             nombre="Video destacado",
             descripcion="Descripción del video",
-            miniatura="upload/photos/sample.png",
+            miniatura="upload/Miniaturas/Premium/sample.webp",
             video="upload/videos/sample.mp4",
             visitas=12_400,
         )
@@ -305,14 +305,14 @@ class FrontendTests(TestCase):
         self.assertContains(home, "12,4 k vistas", count=2)
         playback = self.client.get(reverse("play", args=[video.pk]))
         self.assertContains(playback, "Categoría visible")
-        self.assertContains(playback, 'poster="/media/upload/photos/sample.png"')
+        self.assertContains(playback, "upload/Miniaturas/Premium/sample.webp")
 
     def test_account_menu_uses_native_popover(self):
         staff = Usuario.objects.create_user(username="staff", first_name="Ana", email="ana@example.net", is_staff=True)
         self.client.force_login(staff)
         response = self.client.get(reverse("home"))
         self.assertContains(response, 'popovertarget="account-menu"')
-        self.assertContains(response, "Menú administrador")
+        self.assertContains(response, "Panel de administración")
         self.assertContains(response, "Cerrar sesión")
 
     def test_age_gate_shows_until_accepted(self):
@@ -350,7 +350,7 @@ class CatalogMetadataTests(TestCase):
         video = Videos.objects.create(
             nombre="Video existente",
             descripcion="Descripción de prueba",
-            miniatura="upload/photos/sample.png",
+            miniatura="upload/Miniaturas/Premium/sample.webp",
             video="upload/videos/sample.mp4",
             visitas=0,
         )
@@ -411,7 +411,7 @@ class CatalogSeedTests(TestCase):
                     "nombre": "Sendero",
                     "descripcion": "Descripción del origen",
                     "video": "upload/videos/sendero.mp4",
-                    "miniatura": "upload/photos/sendero.png",
+                    "miniatura": "upload/Miniaturas/Premium/sendero.webp",
                     "visitas": 4,
                     "categorias": [15],
                     "actores": [20],
@@ -441,7 +441,7 @@ class CatalogSeedTests(TestCase):
         self.run_seed(rows, apply=True)
         added = Videos.objects.get(video="upload/videos/sendero.mp4")
         self.assertNotEqual(added.pk, unrelated_video.pk)
-        self.assertEqual(added.miniatura.name, "upload/photos/sendero.png")
+        self.assertEqual(added.miniatura.name, "upload/Miniaturas/Premium/sendero.webp")
         self.assertEqual((added.nombre, added.descripcion, added.visitas), ("Sendero", "Descripción del origen", 4))
         self.assertEqual(added.idioma.nombre, "Español")
         self.assertQuerySetEqual(added.categorias.all(), [existing_category])
@@ -482,7 +482,7 @@ class CatalogSeedTests(TestCase):
 
 class LegacyMigrationTests(TransactionTestCase):
     initial = ("app", "0001_initial")
-    latest = ("app", "0007_clasificacion_video")
+    latest = ("app", "0008_segmentar_miniaturas_premium")
 
     def setUp(self):
         executor = MigrationExecutor(connection)
@@ -515,6 +515,7 @@ class LegacyMigrationTests(TransactionTestCase):
         video = Videos.objects.get(pk=old_video.pk)
         self.assertEqual(video.video.name, "upload/videos/legacy.mp4")
         self.assertEqual(video.miniatura.name, "upload/photos/legacy.png")
+        self.assertTrue(video.es_premium)
         self.assertIsNone(video.idioma_id)
         self.assertFalse(video.categorias.exists())
         self.assertFalse(video.actores.exists())

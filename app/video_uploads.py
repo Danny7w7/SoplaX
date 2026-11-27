@@ -1,9 +1,10 @@
 import logging
+from io import BytesIO
 from contextlib import contextmanager
 from uuid import uuid4
 
 from django import forms
-from PIL import Image
+from PIL import Image, ImageOps
 
 from .models import Videos
 
@@ -13,11 +14,9 @@ MIB = 1024 * 1024
 VIDEO_LIMIT_MIB = 1000
 THUMBNAIL_LIMIT_MIB = 10
 THUMBNAIL_MAX_SIDE = 4096
-THUMBNAIL_FORMATS = {
-    "JPEG": (".jpg", "image/jpeg"),
-    "PNG": (".png", "image/png"),
-    "WEBP": (".webp", "image/webp"),
-}
+THUMBNAIL_FORMAT = "WEBP"
+THUMBNAIL_SIZE = (960, 540)
+WEBP_QUALITY = 82
 
 
 def upload_widget(accept, limit_mib):
@@ -38,14 +37,27 @@ class VideoUploadForm(forms.ModelForm):
     )
     miniatura = forms.FileField(
         label="Miniatura",
-        help_text=f"JPG, PNG o WebP · hasta {THUMBNAIL_LIMIT_MIB} MiB · vista en 16:9",
-        widget=upload_widget("image/jpeg,image/png,image/webp", THUMBNAIL_LIMIT_MIB),
+        help_text=f"WebP · hasta {THUMBNAIL_LIMIT_MIB} MiB · vista en 16:9",
+        widget=upload_widget("image/webp,.webp", THUMBNAIL_LIMIT_MIB),
     )
 
     class Meta:
         model = Videos
-        fields = ("nombre", "descripcion", "video", "miniatura", "idioma", "categorias", "actores", "posturas")
-        labels = {"nombre": "Título", "descripcion": "Descripción"}
+        fields = (
+            "nombre",
+            "descripcion",
+            "es_premium",
+            "video",
+            "miniatura",
+            "idioma",
+            "categorias",
+            "actores",
+            "posturas",
+        )
+        labels = {"nombre": "Título", "descripcion": "Descripción", "es_premium": "Contenido premium"}
+        help_texts = {
+            "es_premium": "Las miniaturas se guardan en una carpeta separada según este valor."
+        }
         widgets = {
             "nombre": forms.TextInput(attrs={"autocomplete": "off"}),
             "descripcion": forms.Textarea(attrs={"class": "input", "rows": 5}),
@@ -56,49 +68,100 @@ class VideoUploadForm(forms.ModelForm):
         }
 
     def clean_video(self):
-        upload = self.cleaned_data["video"]
-        if upload.size > VIDEO_LIMIT_MIB * MIB:
-            raise forms.ValidationError(f"El video debe pesar como máximo {VIDEO_LIMIT_MIB} MiB.")
-        header = upload.read(16)
-        box_size = int.from_bytes(header[:4], "big")
-        if (
-            not upload.name.lower().endswith(".mp4")
-            or len(header) != 16
-            or header[4:8] != b"ftyp"
-            or header[8:12] == b"qt  "
-            or not 16 <= box_size <= upload.size
-        ):
-            raise forms.ValidationError("Selecciona un archivo de video MP4 válido.")
-        upload.seek(0)
-        upload.name = f"{uuid4().hex}.mp4"
-        upload.content_type = "video/mp4"
-        return upload
+        return validate_video_upload(self.cleaned_data["video"])
 
     def clean_miniatura(self):
-        upload = self.cleaned_data["miniatura"]
-        if upload.size > THUMBNAIL_LIMIT_MIB * MIB:
-            raise forms.ValidationError(f"La miniatura debe pesar como máximo {THUMBNAIL_LIMIT_MIB} MiB.")
-        try:
-            with Image.open(upload, formats=tuple(THUMBNAIL_FORMATS)) as image:
-                if max(image.size) > THUMBNAIL_MAX_SIDE:
-                    raise forms.ValidationError(f"Usa una imagen de hasta {THUMBNAIL_MAX_SIDE} píxeles por lado.")
-                if getattr(image, "is_animated", False):
-                    raise forms.ValidationError("Selecciona una imagen estática para la miniatura.")
+        return validate_thumbnail_upload(self.cleaned_data["miniatura"])
+
+
+class VideoManagementForm(VideoUploadForm):
+    """Edit video metadata and optionally replace either stored asset."""
+
+    video = forms.FileField(
+        label="Archivo de video",
+        required=False,
+        help_text=f"MP4 · hasta {VIDEO_LIMIT_MIB} MiB · Déjalo vacío para conservar el actual.",
+        widget=upload_widget(".mp4,video/mp4", VIDEO_LIMIT_MIB),
+    )
+    miniatura = forms.FileField(
+        label="Miniatura",
+        required=False,
+        help_text=f"WebP · hasta {THUMBNAIL_LIMIT_MIB} MiB · Déjala vacía para conservar la actual.",
+        widget=upload_widget("image/webp,.webp", THUMBNAIL_LIMIT_MIB),
+    )
+
+    def clean_video(self):
+        upload = self.files.get(self.add_prefix("video"))
+        return validate_video_upload(upload) if upload else self.instance.video
+
+    def clean_miniatura(self):
+        upload = self.files.get(self.add_prefix("miniatura"))
+        return validate_thumbnail_upload(upload) if upload else self.instance.miniatura
+
+
+def validate_video_upload(upload):
+    if upload.size > VIDEO_LIMIT_MIB * MIB:
+        raise forms.ValidationError(f"El video debe pesar como máximo {VIDEO_LIMIT_MIB} MiB.")
+    header = upload.read(16)
+    box_size = int.from_bytes(header[:4], "big")
+    if (
+        not upload.name.lower().endswith(".mp4")
+        or len(header) != 16
+        or header[4:8] != b"ftyp"
+        or header[8:12] == b"qt  "
+        or not 16 <= box_size <= upload.size
+    ):
+        raise forms.ValidationError("Selecciona un archivo de video MP4 válido.")
+    upload.seek(0)
+    upload.name = f"{uuid4().hex}.mp4"
+    upload.content_type = "video/mp4"
+    return upload
+
+
+def validate_thumbnail_upload(upload):
+    if upload.size > THUMBNAIL_LIMIT_MIB * MIB:
+        raise forms.ValidationError(f"La miniatura debe pesar como máximo {THUMBNAIL_LIMIT_MIB} MiB.")
+    try:
+        with Image.open(upload, formats=(THUMBNAIL_FORMAT,)) as image:
+            if max(image.size) > THUMBNAIL_MAX_SIDE:
+                raise forms.ValidationError(f"Usa una imagen de hasta {THUMBNAIL_MAX_SIDE} píxeles por lado.")
+            if getattr(image, "is_animated", False):
+                raise forms.ValidationError("Selecciona una imagen estática para la miniatura.")
+            image.load()
+    except (Image.DecompressionBombError, OSError, SyntaxError, ValueError) as error:
+        raise forms.ValidationError("Selecciona una miniatura WebP válida.") from error
+    upload.seek(0)
+    upload.name = f"{uuid4().hex}.webp"
+    upload.content_type = "image/webp"
+    return upload
+
+
+def thumbnail_webp_content(content):
+    """Return valid, static WebP bytes, converting legacy image formats as needed."""
+    try:
+        with Image.open(BytesIO(content)) as image:
+            if getattr(image, "is_animated", False):
+                raise ValueError("La miniatura es animada.")
+            if image.format == THUMBNAIL_FORMAT:
                 image.load()
-                extension, content_type = THUMBNAIL_FORMATS[image.format]
-        except (Image.DecompressionBombError, OSError, SyntaxError, ValueError) as error:
-            raise forms.ValidationError("Selecciona una imagen JPG, PNG o WebP válida.") from error
-        upload.seek(0)
-        upload.name = f"{uuid4().hex}{extension}"
-        upload.content_type = content_type
-        return upload
+                return content
+
+            mode = "RGBA" if image.has_transparency_data else "RGB"
+            with ImageOps.exif_transpose(image) as oriented, oriented.convert(mode) as thumbnail:
+                thumbnail.thumbnail(THUMBNAIL_SIZE, Image.Resampling.LANCZOS)
+                with BytesIO() as output:
+                    thumbnail.save(output, THUMBNAIL_FORMAT, quality=WEBP_QUALITY, method=6)
+                    return output.getvalue()
+    except (Image.DecompressionBombError, OSError, SyntaxError, ValueError) as error:
+        raise ValueError("No se pudo leer la miniatura como una imagen válida.") from error
 
 
 @contextmanager
-def store_video_uploads(video):
+def store_video_uploads(video, fields=("video", "miniatura")):
     saved = []
     try:
-        for asset in (video.video, video.miniatura):
+        for field_name in fields:
+            asset = getattr(video, field_name)
             upload = asset.file
             name = asset.field.generate_filename(video, upload.name)
             if asset.storage.exists(name):
