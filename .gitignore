@@ -7,5 +7,6 @@ db.sqlite3-*
 staticfiles/
 .env
 .env.*
+/seeds/catalogo.json
 *.py[cod]
 *$py.class

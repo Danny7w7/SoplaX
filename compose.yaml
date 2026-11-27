@@ -48,6 +48,21 @@ services:
     command: ["python", "manage.py", "rqworker", "account_mail", "--serializer", "rq.serializers.JSONSerializer"]
     stop_grace_period: 30s
 
+  seed:
+    <<: *app
+    profiles: [seed]
+    entrypoint: ["python", "manage.py", "importar_catalogo", "/run/soplax-seed/catalogo.json"]
+    command: []
+    depends_on: {}
+    restart: "no"
+    volumes:
+      - type: bind
+        source: ./seeds/catalogo.json
+        target: /run/soplax-seed/catalogo.json
+        read_only: true
+        bind:
+          create_host_path: false
+
   redis:
     image: redis:8.4-alpine
     command: ["redis-server", "--appendonly", "yes"]

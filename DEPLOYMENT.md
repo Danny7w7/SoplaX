@@ -30,11 +30,45 @@ docker compose --env-file .env.production --profile postgres run --rm --no-deps 
 docker compose --env-file .env.production --profile postgres up -d --no-build --wait web worker
 ```
 
-Si usas PostgreSQL externo, inicia Redis con `docker compose --env-file .env.production up -d --wait redis` y ejecuta la migración y el arranque con los comandos anteriores omitiendo `--profile postgres`. En una base existente, puedes revisar primero el plan con `python manage.py migrate --plan` en el contenedor web. Si el proveedor requiere una CA, monta el certificado en `web` y `worker` y apunta `DB_SSL_CA` a la ruta dentro de los contenedores. Django usa esa CA para verificar el certificado y el nombre indicado en `DB_HOST`.
+Si usas PostgreSQL externo, inicia Redis con `docker compose --env-file .env.production up -d --wait redis` y ejecuta la migración y el arranque con los comandos anteriores omitiendo `--profile postgres`. En una base existente, puedes revisar primero el plan con `python manage.py migrate --plan` en el contenedor web. Si el proveedor requiere una CA, monta el certificado en `web` y `worker`. Móntalo también en `seed` cuando importes el catálogo. Apunta `DB_SSL_CA` a la ruta dentro de los contenedores. Django usa esa CA para verificar el certificado y el nombre indicado en `DB_HOST`.
 
 El servicio de Compose guarda los datos de PostgreSQL 18 en el volumen `postgres_data` montado en `/var/lib/postgresql`. Las migraciones de Django crean el esquema en una base nueva con el catálogo vacío. Para crear una cuenta de administración, ejecuta `docker compose --env-file .env.production exec web python manage.py createsuperuser`.
 
 Ejecuta las migraciones y `createsuperuser` únicamente contra la instancia PostgreSQL destinada a SoplaX.
+
+## Importar el catálogo de videos
+
+En el equipo que tiene el catálogo local, activa el entorno virtual y genera el archivo desde SQLite con PowerShell.
+
+```powershell
+$env:DJANGO_ENV = "development"
+New-Item -ItemType Directory -Path seeds -Force | Out-Null
+python -X utf8 manage.py dumpdata app.actor app.categoria app.idioma app.postura app.videos --indent 2 --output seeds/catalogo.json
+```
+
+Django usa `db.sqlite3` salvo que hayas definido `DJANGO_SQLITE_PATH`. El archivo contiene metadatos, clasificaciones y claves de los videos y miniaturas en S3. Colócalo en `seeds/catalogo.json` junto a `compose.yaml` en el servidor, con permisos de lectura para el usuario del contenedor.
+
+Ejecuta las migraciones y el seed únicamente contra el PostgreSQL asignado a SoplaX. Verifica el destino en `DB_HOST` y `DB_NAME`, y usa el bucket que ya contiene los videos y miniaturas en `AWS_STORAGE_BUCKET_NAME`. Con PostgreSQL en marcha, reconstruye la imagen, aplica las migraciones y simula la importación.
+
+```sh
+docker compose --env-file .env.production build web
+docker compose --env-file .env.production --profile postgres run --rm --no-deps web python manage.py migrate --noinput
+docker compose --env-file .env.production --profile postgres run --rm --no-deps seed
+```
+
+La simulación valida el archivo, consulta el catálogo y muestra cuántos videos insertaría y cuántos ya existen. Cuando el resultado sea el esperado, aplica la importación.
+
+```sh
+docker compose --env-file .env.production --profile postgres run --rm --no-deps seed --aplicar
+```
+
+El seed usa la clave del objeto de S3 para identificar los videos, conserva los registros y las visitas existentes y enlaza las clasificaciones de los videos nuevos por nombre. Después de aplicar, repite la simulación y verifica que indica cero videos y cero clasificaciones por insertar.
+
+```sh
+docker compose --env-file .env.production --profile postgres run --rm --no-deps seed
+```
+
+Con PostgreSQL externo, omite `--profile postgres`. Si el despliegue usa otro archivo de entorno, conserva su ruta en `--env-file` y `SOPLAX_ENV_FILE`.
 
 ## Base de datos con contenido
 

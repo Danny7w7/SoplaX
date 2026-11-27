@@ -1,6 +1,9 @@
+import json
 from datetime import timedelta
 from io import StringIO
+from pathlib import Path
 from smtplib import SMTPException
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
 from urllib.parse import urlsplit
 
@@ -8,10 +11,11 @@ from django.contrib.auth.models import Permission
 from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
 from django.core.cache import cache
-from django.core.management import call_command
-from django.db import connection
+from django.core.management import CommandError, call_command
+from django.db import IntegrityError, connection
 from django.db.migrations.executor import MigrationExecutor
 from django.test import Client, TestCase, TransactionTestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 
@@ -318,6 +322,98 @@ class CatalogMetadataTests(TestCase):
         video.refresh_from_db()
         self.assertIsNone(video.idioma_id)
         self.assertEqual(video.video.name, "upload/videos/sample.mp4")
+
+
+class CatalogSeedTests(TestCase):
+    def run_seed(self, rows, *, apply=False):
+        with TemporaryDirectory() as directory:
+            fixture = Path(directory) / "catalogo.json"
+            fixture.write_text(json.dumps(rows), encoding="utf-8")
+            output = StringIO()
+            args = ["--aplicar"] if apply else []
+            call_command("importar_catalogo", str(fixture), *args, stdout=output)
+        return output.getvalue()
+
+    def fixture_rows(self):
+        return [
+            {"model": "app.categoria", "pk": 15, "fields": {"nombre": "Naturaleza"}},
+            {"model": "app.actor", "pk": 20, "fields": {"nombre": "Intérprete local"}},
+            {"model": "app.idioma", "pk": 25, "fields": {"nombre": "Español"}},
+            {"model": "app.postura", "pk": 30, "fields": {"nombre": "Posición local"}},
+            {
+                "model": "app.videos",
+                "pk": 35,
+                "fields": {
+                    "nombre": "Sendero",
+                    "descripcion": "Descripción del origen",
+                    "video": "upload/videos/sendero.mp4",
+                    "miniatura": "upload/photos/sendero.png",
+                    "visitas": 4,
+                    "categorias": [15],
+                    "actores": [20],
+                    "idioma": 25,
+                    "posturas": [30],
+                },
+            },
+        ]
+
+    def test_simulates_before_import_and_preserves_content_on_repeat(self):
+        rows = self.fixture_rows()
+        existing_category = Categoria.objects.create(pk=100, nombre="Naturaleza")
+        unrelated_video = Videos.objects.create(
+            pk=35, nombre="Video existente", video="upload/videos/existente.mp4", visitas=16
+        )
+        account = Usuario.objects.create(username="editor")
+
+        with CaptureQueriesContext(connection) as queries:
+            output = self.run_seed(rows)
+        self.assertTrue(queries.captured_queries)
+        self.assertTrue(all(query["sql"].lstrip().upper().startswith("SELECT ") for query in queries))
+        self.assertIn("upload/videos/sendero.mp4", output)
+        self.assertIn("Español", output)
+        self.assertQuerySetEqual(Videos.objects.all(), [unrelated_video])
+        self.assertFalse(Idioma.objects.exists())
+
+        self.run_seed(rows, apply=True)
+        added = Videos.objects.get(video="upload/videos/sendero.mp4")
+        self.assertNotEqual(added.pk, unrelated_video.pk)
+        self.assertEqual(added.miniatura.name, "upload/photos/sendero.png")
+        self.assertEqual((added.nombre, added.descripcion, added.visitas), ("Sendero", "Descripción del origen", 4))
+        self.assertEqual(added.idioma.nombre, "Español")
+        self.assertQuerySetEqual(added.categorias.all(), [existing_category])
+        self.assertEqual(added.actores.get().nombre, "Intérprete local")
+        self.assertEqual(added.posturas.get().nombre, "Posición local")
+
+        Videos.objects.filter(pk=added.pk).update(nombre="Título editado", visitas=99)
+        added.categorias.clear()
+        before = list(Videos.objects.order_by("pk").values())
+        actual = self.run_seed(rows, apply=True)
+        self.assertIn("0 videos", actual)
+        self.assertEqual(list(Videos.objects.order_by("pk").values()), before)
+        self.assertFalse(added.categorias.exists())
+        self.assertEqual(Actor.objects.count(), 1)
+        self.assertEqual(Postura.objects.count(), 1)
+        self.assertQuerySetEqual(Usuario.objects.all(), [account])
+
+    def test_validates_references_and_rejects_ambiguous_destination(self):
+        rows = self.fixture_rows()
+        incomplete = [row for row in rows if row["model"] != "app.idioma"]
+        with self.assertRaisesMessage(CommandError, "clasificación que falta"):
+            self.run_seed(incomplete)
+
+        key = rows[-1]["fields"]["video"]
+        Videos.objects.bulk_create([Videos(nombre=name, video=key, visitas=0) for name in ("Uno", "Dos")])
+        with self.assertRaisesMessage(CommandError, "más de un video"):
+            self.run_seed(rows, apply=True)
+        self.assertFalse(Categoria.objects.exists())
+
+    def test_rolls_back_classifications_if_video_insert_fails(self):
+        with patch.object(Videos, "save", side_effect=IntegrityError("fallo de prueba")):
+            with self.assertRaisesMessage(CommandError, "Se revirtieron los cambios"):
+                self.run_seed(self.fixture_rows(), apply=True)
+        self.assertFalse(Videos.objects.exists())
+        for model in (Actor, Categoria, Idioma, Postura):
+            self.assertFalse(model.objects.exists())
 
 
 class LegacyMigrationTests(TransactionTestCase):
