@@ -66,8 +66,8 @@ class ContentSecurityPolicyMiddleware:
         self.policy = "; ".join(
             [
                 "default-src 'self'",
-                "script-src 'self' https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js",
-                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css https://fonts.googleapis.com",
+                "script-src 'self'",
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
                 "font-src 'self' https://fonts.gstatic.com",
                 f"img-src 'self' data: https://cdn-icons-png.flaticon.com{media}",
                 f"media-src 'self'{media}",

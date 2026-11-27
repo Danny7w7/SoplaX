@@ -1,0 +1,23 @@
+{% comment %}
+  Verificación de edad. Se omite cuando existe la cookie soplax_age_ok (la crea static/js/app.js).
+  Se renderiza abierta para que también bloquee sin JavaScript; app.js la convierte en modal.
+{% endcomment %}
+{% if not request.COOKIES.soplax_age_ok %}
+<dialog class="age-gate" id="age-gate" open aria-labelledby="age-gate-title" aria-describedby="age-gate-text">
+  <div class="age-gate__panel">
+    <p class="age-gate__badge" aria-hidden="true">18+</p>
+    <p class="eyebrow"><span class="x-glyph" aria-hidden="true"></span>Contenido para adultos</p>
+    <h2 class="age-gate__title" id="age-gate-title">Solo para mayores de 18 años</h2>
+    <p class="age-gate__text" id="age-gate-text">
+      SoplaX contiene material sexual explícito. Al entrar confirmas que tienes al menos 18 años,
+      o la mayoría de edad legal en tu país, y que aceptas ver este tipo de contenido.
+    </p>
+    <form class="age-gate__actions" method="dialog">
+      <button class="button button--primary button--lg button--block" type="submit" value="accept">
+        Soy mayor de edad, entrar
+      </button>
+      <a class="button button--ghost button--block" href="https://www.google.com/" rel="noreferrer">Salir</a>
+    </form>
+  </div>
+</dialog>
+{% endif %}

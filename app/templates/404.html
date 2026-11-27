@@ -1,0 +1,13 @@
+{% extends "panel_base.html" %}
+
+{% block page_title %}Página no encontrada{% endblock %}
+{% block panel %}
+  <p class="error-code" aria-hidden="true">404</p>
+  <header class="panel__header">
+    <h1 class="panel__title" id="panel-title">No encontramos esta página</h1>
+    <p class="panel__lead">Es posible que el enlace haya cambiado o que el video ya no esté disponible.</p>
+  </header>
+  <div class="panel__actions">
+    <a class="button button--primary" href="{% url 'home' %}">Volver al catálogo</a>
+  </div>
+{% endblock %}

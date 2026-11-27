@@ -1,0 +1,12 @@
+{% load soplax %}
+<article class="video-card">
+  <a class="video-card__link" href="{% url 'play' id=video.id %}">
+    <div class="video-card__media" data-skeleton>
+      <img class="video-card__thumb" alt="" width="640" height="360" loading="lazy" decoding="async"
+           src="{% if video.miniatura %}{{ video.miniatura.url }}{% else %}{{ default_thumbnail }}{% endif %}">
+      <span class="video-card__play" aria-hidden="true"><span class="icon-play"></span></span>
+    </div>
+    <h3 class="video-card__title">{{ video.nombre }}</h3>
+  </a>
+  <p class="video-card__meta">{{ video.visitas|vistas }}</p>
+</article>

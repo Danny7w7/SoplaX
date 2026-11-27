@@ -1,0 +1,155 @@
+/* SoplaX — Página de reproducción en modo teatro. */
+@layer pages {
+  .theater {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  /* Luz ambiental a partir de la miniatura del video */
+  .theater__ambient {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+  }
+
+  .theater__ambient img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.3;
+    filter: blur(64px) saturate(1.1);
+    transform: scale(1.3);
+  }
+
+  .theater__ambient::after {
+    position: absolute;
+    inset: 0;
+    content: "";
+    background: linear-gradient(to bottom, var(--color-scrim), var(--color-background));
+  }
+
+  .player {
+    width: 100%;
+    margin-inline: auto;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: var(--color-background);
+  }
+
+  .player__video {
+    width: 100%;
+    height: 100%;
+    background: var(--color-background);
+  }
+
+  @media (min-width: 48rem) {
+    .theater {
+      padding: var(--space-6) var(--gutter);
+    }
+
+    /* El reproductor nunca supera el alto visible de la pantalla */
+    .player {
+      max-width: min(72rem, calc((100svh - var(--header-height) - var(--space-16)) * 16 / 9));
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+    }
+  }
+
+  .watch {
+    display: grid;
+    gap: var(--space-6);
+    max-width: 76rem;
+    padding-block-start: var(--space-6);
+  }
+
+  .watch__header {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-3);
+  }
+
+  .watch__title {
+    font-size: var(--text-3xl);
+    font-weight: var(--font-weight-black);
+    letter-spacing: var(--tracking-display);
+    overflow-wrap: anywhere;
+  }
+
+  .watch__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .watch__meta li + li::before {
+    margin-inline-end: var(--space-3);
+    color: var(--color-border-strong);
+    content: "•";
+  }
+
+  .watch__body {
+    display: grid;
+    align-items: start;
+    gap: var(--space-6);
+  }
+
+  @media (min-width: 64rem) {
+    .watch__body {
+      grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+    }
+  }
+
+  .watch__description {
+    padding: var(--space-5);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+  }
+
+  .watch__subtitle,
+  .tag-group dt {
+    margin-block-end: var(--space-3);
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+  }
+
+  .watch__text.is-clamped {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+  }
+
+  .watch__more {
+    min-height: var(--space-6);
+    margin-block-start: var(--space-3);
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-accent);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .watch__more:hover {
+    color: var(--color-text);
+  }
+
+  .watch__tags {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .tag-group dd {
+    margin: 0;
+  }
+}

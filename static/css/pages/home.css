@@ -1,0 +1,153 @@
+/* SoplaX — Página principal: destacado y catálogo. */
+@layer pages {
+  .hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  /* Ambientación: la propia miniatura desenfocada (las imágenes no cuentan en la regla 75-20-5) */
+  .hero__backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+  }
+
+  .hero__backdrop img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.4;
+    filter: blur(48px) saturate(1.1);
+    transform: scale(1.2);
+  }
+
+  .hero__backdrop::after {
+    position: absolute;
+    inset: 0;
+    content: "";
+    background:
+      linear-gradient(to top, var(--color-background), transparent 55%),
+      linear-gradient(to right, var(--color-background) 10%, var(--color-scrim) 55%, transparent);
+  }
+
+  .hero__inner {
+    display: grid;
+    gap: var(--space-6);
+    padding-block: var(--space-6) var(--space-10);
+  }
+
+  .hero__content {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-4);
+  }
+
+  .hero__title {
+    font-size: var(--text-display);
+    font-weight: var(--font-weight-black);
+    line-height: 1.05;
+    letter-spacing: var(--tracking-display);
+    overflow-wrap: anywhere;
+  }
+
+  .hero__description {
+    display: -webkit-box;
+    max-width: 42ch;
+    overflow: hidden;
+    color: var(--color-text-muted);
+    font-size: var(--text-lg);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4);
+    margin-block-start: var(--space-2);
+  }
+
+  .hero__meta {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .hero__poster {
+    position: relative;
+    order: -1;
+    display: block;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+  }
+
+  .hero__poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--duration-slow) var(--ease-standard);
+  }
+
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .hero__poster:hover img {
+      transform: scale(1.03);
+    }
+  }
+
+  @media (min-width: 56rem) {
+    .hero__inner {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      align-items: center;
+      gap: var(--space-12);
+      padding-block: var(--space-16);
+    }
+
+    .hero__poster {
+      order: 2;
+    }
+  }
+
+  /* Catálogo */
+  .catalog {
+    padding-block-start: var(--space-10);
+  }
+
+  .catalog__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    margin-block-end: var(--space-6);
+    padding-block-end: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .catalog__title {
+    font-size: var(--text-2xl);
+    overflow-wrap: anywhere;
+  }
+
+  .catalog--results .catalog__title {
+    font-size: var(--text-3xl);
+    font-weight: var(--font-weight-black);
+    letter-spacing: var(--tracking-display);
+  }
+
+  .catalog__query {
+    color: var(--color-accent);
+  }
+
+  .catalog__count {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+  }
+}

@@ -1,0 +1,13 @@
+{% extends "panel_base.html" %}
+
+{% block page_title %}Error del servidor{% endblock %}
+{% block panel %}
+  <p class="error-code" aria-hidden="true">500</p>
+  <header class="panel__header">
+    <h1 class="panel__title" id="panel-title">Algo salió mal</h1>
+    <p class="panel__lead">Tuvimos un problema al cargar esta página. Inténtalo de nuevo en unos minutos.</p>
+  </header>
+  <div class="panel__actions">
+    <a class="button button--primary" href="{% url 'home' %}">Volver al catálogo</a>
+  </div>
+{% endblock %}

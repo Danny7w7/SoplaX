@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% block page_title %}SoplaX{% endblock %} · SoplaX{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{% static 'css/pages/panel.css' %}">{% endblock %}
+{% block body_class %}page-panel{% endblock %}
+{% block header %}{% include "partials/header_minimal.html" %}{% endblock %}
+
+{% block content %}
+<div class="panel-page">
+  {% include "partials/x_backdrop.html" %}
+  <section class="panel{% block panel_class %}{% endblock %}" aria-labelledby="panel-title">
+    {% block panel %}{% endblock %}
+  </section>
+</div>
+{% endblock %}

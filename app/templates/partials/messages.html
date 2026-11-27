@@ -1,0 +1,12 @@
+{% if messages %}
+<div class="toast-region" role="status" aria-live="polite">
+  {% for message in messages %}
+  <div class="toast{% if message.level_tag %} toast--{{ message.level_tag }}{% endif %}">
+    <p>{{ message }}</p>
+    <button class="toast__close" type="button" aria-label="Cerrar notificación" data-dismiss-toast>
+      <span aria-hidden="true">×</span>
+    </button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}

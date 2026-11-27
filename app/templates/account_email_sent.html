@@ -1,8 +1,13 @@
-{% extends "account_base.html" %}
+{% extends "panel_base.html" %}
 
-{% block title %}Revisa tu correo{% endblock %}
-{% block account %}
-  <h1 class="h4 mb-3">Revisa tu correo</h1>
-  <p>Si la dirección puede recibir un enlace para esta solicitud, te lo enviaremos en breve.</p>
-  <p class="mb-0"><a href="{% url 'login' %}">Volver al inicio de sesión</a></p>
+{% block page_title %}Revisa tu correo{% endblock %}
+{% block panel %}
+  <header class="panel__header">
+    <p class="eyebrow"><span class="x-glyph" aria-hidden="true"></span>Tu cuenta</p>
+    <h1 class="panel__title" id="panel-title">Revisa tu correo</h1>
+    <p class="panel__lead">Si la dirección puede recibir un enlace para esta solicitud, te lo enviaremos en breve.</p>
+  </header>
+  <div class="panel__links">
+    <a href="{% url 'login' %}">Volver al inicio de sesión</a>
+  </div>
 {% endblock %}

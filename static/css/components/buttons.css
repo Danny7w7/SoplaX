@@ -1,0 +1,86 @@
+/* SoplaX — Botones e iconos de interfaz. */
+@layer components {
+  .button {
+    --button-bg: var(--color-surface);
+    --button-bg-hover: var(--color-surface-raised);
+    --button-fg: var(--color-text);
+    --button-border: var(--color-border);
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: var(--control-height);
+    padding: 0 var(--space-5);
+    border: 1px solid var(--button-border);
+    border-radius: var(--radius-md);
+    background: var(--button-bg);
+    color: var(--button-fg);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      background-color var(--duration-fast) var(--ease-standard),
+      border-color var(--duration-fast) var(--ease-standard),
+      color var(--duration-fast) var(--ease-standard),
+      transform var(--duration-fast) var(--ease-standard);
+  }
+
+  .button:hover {
+    background: var(--button-bg-hover);
+    color: var(--button-fg);
+  }
+
+  .button:active {
+    transform: translateY(1px);
+  }
+
+  .button--primary {
+    --button-bg: var(--color-primary);
+    --button-bg-hover: var(--color-primary-hover);
+    --button-fg: var(--color-on-primary);
+    --button-border: transparent;
+  }
+
+  .button--ghost {
+    --button-bg: transparent;
+    --button-bg-hover: var(--color-surface);
+    --button-border: transparent;
+  }
+
+  .button--sm {
+    min-height: var(--control-height-sm);
+    padding-inline: var(--space-3);
+  }
+
+  .button--lg {
+    min-height: var(--space-12);
+    padding-inline: var(--space-6);
+    font-size: var(--text-base);
+  }
+
+  .button--block {
+    width: 100%;
+  }
+
+  .button.is-disabled {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .button[aria-busy="true"] {
+    pointer-events: none;
+  }
+
+  /* Triángulo de reproducción dibujado con CSS */
+  .icon-play {
+    flex: none;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0.4em 0 0.4em 0.68em;
+    border-color: transparent transparent transparent currentColor;
+  }
+}

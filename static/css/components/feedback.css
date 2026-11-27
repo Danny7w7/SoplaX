@@ -1,0 +1,167 @@
+/* SoplaX — La X como glifo y loader, estados vacíos y notificaciones. */
+@layer components {
+  .x-glyph,
+  .x-loader {
+    position: relative;
+    display: inline-block;
+    flex: none;
+    width: 0.75em;
+    height: 0.75em;
+  }
+
+  .x-glyph {
+    color: var(--color-primary);
+  }
+
+  .x-glyph::before,
+  .x-glyph::after,
+  .x-loader::before,
+  .x-loader::after {
+    position: absolute;
+    inset-block-start: calc(50% - 1px);
+    inset-inline-start: 0;
+    width: 100%;
+    height: 2px;
+    border-radius: 1px;
+    background: currentColor;
+    content: "";
+    transform: rotate(45deg);
+  }
+
+  .x-glyph::after,
+  .x-loader::after {
+    transform: rotate(-45deg);
+  }
+
+  .x-glyph--lg {
+    width: var(--space-10);
+    height: var(--space-10);
+    color: var(--color-border-strong);
+  }
+
+  .x-loader {
+    width: 1em;
+    height: 1em;
+    animation: x-spin 900ms var(--ease-standard) infinite;
+  }
+
+  @keyframes x-spin {
+    to {
+      transform: rotate(180deg);
+    }
+  }
+
+  @keyframes x-pulse {
+    50% {
+      opacity: 0.35;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .x-loader {
+      animation: x-pulse 1.2s ease-in-out infinite;
+    }
+  }
+
+  .empty-state {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-3);
+    max-width: 32rem;
+    margin: var(--space-8) auto 0;
+    padding: var(--space-12) var(--space-6);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    text-align: center;
+  }
+
+  .empty-state .x-glyph {
+    margin-block-end: var(--space-2);
+  }
+
+  .empty-state__title {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .empty-state p:not(.empty-state__title) {
+    color: var(--color-text-muted);
+  }
+
+  .empty-state .button {
+    margin-block-start: var(--space-3);
+  }
+
+  /* Notificaciones (django.contrib.messages) */
+  .toast-region {
+    position: fixed;
+    inset-block-end: var(--space-4);
+    inset-inline: var(--space-4);
+    z-index: var(--z-toast);
+    display: grid;
+    justify-items: end;
+    gap: var(--space-2);
+    pointer-events: none;
+  }
+
+  .toast {
+    --toast-color: var(--color-accent);
+
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    width: min(100%, 24rem);
+    padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+    border: 1px solid var(--color-border);
+    border-inline-start: 3px solid var(--toast-color);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-overlay);
+    pointer-events: auto;
+    animation: toast-in var(--duration-slow) var(--ease-standard);
+  }
+
+  .toast p {
+    flex: 1;
+    padding-block: var(--space-1);
+    font-size: var(--text-sm);
+  }
+
+  .toast--success {
+    --toast-color: var(--color-success);
+  }
+
+  .toast--warning {
+    --toast-color: var(--color-warning);
+  }
+
+  .toast--error {
+    --toast-color: var(--color-danger);
+  }
+
+  .toast__close {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    width: var(--space-8);
+    height: var(--space-8);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: var(--text-lg);
+    line-height: 1;
+  }
+
+  .toast__close:hover {
+    background: var(--color-surface-raised);
+    color: var(--color-text);
+  }
+
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(var(--space-2));
+    }
+  }
+}

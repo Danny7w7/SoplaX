@@ -1,13 +1,18 @@
-{% extends "account_base.html" %}
+{% extends "panel_base.html" %}
 
-{% block title %}{{ title }}{% endblock %}
-{% block account %}
-  <h1 class="h4 mb-3">{{ title }}</h1>
-  <p>{{ instruction }}</p>
-  <form method="post">
+{% block page_title %}{{ title }}{% endblock %}
+{% block panel %}
+  <header class="panel__header">
+    <p class="eyebrow"><span class="x-glyph" aria-hidden="true"></span>Tu cuenta</p>
+    <h1 class="panel__title" id="panel-title">{{ title }}</h1>
+    <p class="panel__lead">{{ instruction }}</p>
+  </header>
+  <form class="form" method="post" data-loading>
     {% csrf_token %}
-    {{ form.as_p }}
-    <button class="btn first mt-4" type="submit">Enviar</button>
+    {% include "partials/form_fields.html" %}
+    <button class="button button--primary button--block button--lg" type="submit">Enviar</button>
   </form>
-  <p class="mt-4 mb-0"><a href="{% url 'login' %}">Volver al inicio de sesión</a></p>
+  <div class="panel__links">
+    <a href="{% url 'login' %}">Volver al inicio de sesión</a>
+  </div>
 {% endblock %}

@@ -1,0 +1,19 @@
+{% if page.has_other_pages %}
+<nav class="pagination" aria-label="Páginas de videos">
+  {% if page.has_previous %}
+  <a class="button" href="?search={{ query|urlencode }}&amp;page={{ page.previous_page_number }}" rel="prev">
+    <span aria-hidden="true">←</span> Anterior
+  </a>
+  {% else %}
+  <span class="button is-disabled" aria-hidden="true">← Anterior</span>
+  {% endif %}
+  <span class="pagination__status">Página <strong>{{ page.number }}</strong> de {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}
+  <a class="button" href="?search={{ query|urlencode }}&amp;page={{ page.next_page_number }}" rel="next">
+    Siguiente <span aria-hidden="true">→</span>
+  </a>
+  {% else %}
+  <span class="button is-disabled" aria-hidden="true">Siguiente →</span>
+  {% endif %}
+</nav>
+{% endif %}

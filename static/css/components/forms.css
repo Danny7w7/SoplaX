@@ -1,0 +1,114 @@
+/* SoplaX — Formularios. */
+@layer components {
+  .form {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .field {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .field__label {
+    color: var(--color-text);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .field__control {
+    position: relative;
+  }
+
+  .input,
+  .field__control input:not([type="checkbox"], [type="radio"]) {
+    display: block;
+    width: 100%;
+    min-height: var(--control-height);
+    padding: 0 var(--space-3);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-sunken);
+    color: var(--color-text);
+    font-size: var(--text-base);
+    transition:
+      border-color var(--duration-fast) var(--ease-standard),
+      box-shadow var(--duration-fast) var(--ease-standard);
+  }
+
+  .input:hover,
+  .field__control input:hover {
+    border-color: var(--color-text-muted);
+  }
+
+  .input:focus-visible,
+  .field__control input:focus-visible {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 1px var(--color-accent);
+  }
+
+  .input:-webkit-autofill,
+  .field__control input:-webkit-autofill {
+    -webkit-text-fill-color: var(--color-text);
+    caret-color: var(--color-text);
+    box-shadow: 0 0 0 100vmax var(--color-surface-sunken) inset;
+  }
+
+  .field--invalid input {
+    border-color: var(--color-danger);
+  }
+
+  .field__control--password input {
+    padding-inline-end: 6rem;
+  }
+
+  .field__toggle {
+    position: absolute;
+    inset-block: var(--space-1);
+    inset-inline-end: var(--space-1);
+    padding: 0 var(--space-3);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-accent);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-semibold);
+    transition: background-color var(--duration-fast) var(--ease-standard);
+  }
+
+  .field__toggle:hover {
+    background: var(--color-surface-raised);
+  }
+
+  .field__help {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+  }
+
+  .field__help ul {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0;
+    padding-inline-start: var(--space-5);
+  }
+
+  .field__errors {
+    display: grid;
+    gap: var(--space-1);
+    padding: 0;
+    color: var(--color-danger);
+    font-size: var(--text-sm);
+    list-style: none;
+  }
+
+  .form-alert {
+    display: grid;
+    gap: var(--space-1);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-danger);
+    border-radius: var(--radius-md);
+    background: var(--color-danger-subtle);
+    font-size: var(--text-sm);
+  }
+}

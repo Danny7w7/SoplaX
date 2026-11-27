@@ -277,6 +277,70 @@ class CatalogSecurityTests(TestCase):
         self.assertEqual(self.client.get(reverse("play", args=[video.pk + 1])).status_code, 404)
 
 
+class FrontendTests(TestCase):
+    def test_pages_use_native_design_system(self):
+        video = Videos.objects.create(
+            nombre="Video destacado",
+            descripcion="Descripción del video",
+            miniatura="upload/photos/sample.png",
+            video="upload/videos/sample.mp4",
+            visitas=12_400,
+        )
+        video.categorias.add(Categoria.objects.create(nombre="Categoría visible"))
+        pages = ["home", "login", "register", "recover", "account_email_sent", "redirect"]
+        urls = [reverse(name) for name in pages] + [reverse("play", args=[video.pk])]
+        for url in urls:
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                html = response.content.decode()
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, "css/tokens.css")
+                self.assertContains(response, "Hecho por un aprendiz SENA")
+                self.assertNotIn("bootstrap", html.lower())
+                self.assertNotIn("data-bs-", html)
+                self.assertNotIn('style="', html)
+                self.assertNotIn("bootstrap", response["Content-Security-Policy"])
+
+        home = self.client.get(reverse("home"))
+        self.assertContains(home, "12,4 k vistas", count=2)
+        playback = self.client.get(reverse("play", args=[video.pk]))
+        self.assertContains(playback, "Categoría visible")
+        self.assertContains(playback, 'poster="/media/upload/photos/sample.png"')
+
+    def test_account_menu_uses_native_popover(self):
+        staff = Usuario.objects.create_user(username="staff", first_name="Ana", email="ana@example.net", is_staff=True)
+        self.client.force_login(staff)
+        response = self.client.get(reverse("home"))
+        self.assertContains(response, 'popovertarget="account-menu"')
+        self.assertContains(response, "Menú administrador")
+        self.assertContains(response, "Cerrar sesión")
+
+    def test_age_gate_shows_until_accepted(self):
+        for url in (reverse("home"), reverse("login"), reverse("redirect")):
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertContains(response, 'id="age-gate"')
+                self.assertContains(response, 'method="dialog"')
+                self.assertContains(response, "Solo para mayores de 18 años")
+
+        self.client.cookies["soplax_age_ok"] = "1"
+        self.assertNotContains(self.client.get(reverse("home")), 'id="age-gate"')
+
+    @override_settings(DEBUG=False)
+    def test_missing_page_uses_branded_template(self):
+        response = self.client.get("/no-existe/")
+        self.assertContains(response, "No encontramos esta página", status_code=404)
+        self.assertContains(response, "Hecho por un aprendiz SENA", status_code=404)
+
+    def test_view_counts_are_compact(self):
+        from .templatetags.soplax import vistas
+
+        self.assertEqual(
+            [vistas(count) for count in (0, 1, 999, 1_000, 12_400, 999_960, 2_000_000, None)],
+            ["0 vistas", "1 vista", "999 vistas", "1 k vistas", "12,4 k vistas", "1 M vistas", "2 M vistas", ""],
+        )
+
+
 class CatalogMetadataTests(TestCase):
     def test_video_editor_can_assign_catalog_entries(self):
         editor = Usuario.objects.create_user(username="editor", is_staff=True)

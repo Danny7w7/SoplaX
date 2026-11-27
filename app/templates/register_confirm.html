@@ -1,16 +1,19 @@
-{% extends "account_base.html" %}
+{% extends "panel_base.html" %}
 
-{% block title %}Completar registro{% endblock %}
-{% block account %}
-  <h1 class="h4 mb-4">Completar registro</h1>
+{% block page_title %}Completar registro{% endblock %}
+{% block panel %}
+  <header class="panel__header">
+    <p class="eyebrow"><span class="x-glyph" aria-hidden="true"></span>Tu cuenta</p>
+    <h1 class="panel__title" id="panel-title">Completar registro</h1>
+  </header>
   {% if form %}
-    <form method="post">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button class="btn first mt-4" type="submit">Crear cuenta</button>
-    </form>
+  <form class="form" method="post" data-loading>
+    {% csrf_token %}
+    {% include "partials/form_fields.html" %}
+    <button class="button button--primary button--block button--lg" type="submit">Crear cuenta</button>
+  </form>
   {% else %}
-    <p>El enlace de registro no está disponible.</p>
-    <p class="mb-0"><a href="{% url 'register' %}">Solicitar un enlace nuevo</a></p>
+  <p class="panel__lead">El enlace de registro no está disponible.</p>
+  <a class="button button--primary button--block" href="{% url 'register' %}">Solicitar un enlace nuevo</a>
   {% endif %}
 {% endblock %}

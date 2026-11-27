@@ -1,0 +1,79 @@
+/* SoplaX — Verificación de edad (dialog nativo). */
+@layer components {
+  .age-gate {
+    width: min(100% - var(--space-8), var(--container-narrow));
+    max-height: calc(100dvh - var(--space-8));
+    margin: auto;
+    padding: 0;
+    overflow: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: var(--shadow-overlay);
+  }
+
+  .age-gate[open] {
+    animation: age-gate-in var(--duration-slow) var(--ease-standard);
+  }
+
+  .age-gate::backdrop {
+    background: var(--color-scrim);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+  }
+
+  /* Sin JavaScript el diálogo queda abierto en modo no modal: se fija sobre toda la página */
+  .age-gate[open]:not(:modal) {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--z-toast) + 10);
+    outline: 100vmax solid var(--color-scrim);
+  }
+
+  html:has(.age-gate[open]) {
+    overflow: hidden;
+  }
+
+  .age-gate__panel {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-4);
+    padding: var(--space-8) var(--space-6);
+    text-align: center;
+  }
+
+  .age-gate__badge {
+    color: transparent;
+    font-size: clamp(3.5rem, 2.5rem + 4vw, 4.5rem);
+    font-weight: var(--font-weight-black);
+    line-height: 1;
+    letter-spacing: -0.05em;
+    -webkit-text-stroke: 1.5px var(--color-accent);
+  }
+
+  .age-gate__title {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-black);
+    letter-spacing: var(--tracking-display);
+  }
+
+  .age-gate__text {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+  }
+
+  .age-gate__actions {
+    display: grid;
+    gap: var(--space-2);
+    width: 100%;
+    margin-block-start: var(--space-2);
+  }
+
+  @keyframes age-gate-in {
+    from {
+      opacity: 0;
+      transform: translateY(var(--space-2)) scale(0.98);
+    }
+  }
+}
