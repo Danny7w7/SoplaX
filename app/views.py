@@ -6,7 +6,7 @@ from django.contrib.auth import login
 from django.contrib.auth.views import PasswordResetConfirmView
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
-from django.db.models import F, Value
+from django.db.models import Count, F, Value
 from django.db.models.functions import Replace
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
@@ -181,6 +181,21 @@ class AccountPasswordResetConfirmView(PasswordResetConfirmView):
         return None
 
 
+def video_recommendations(video):
+    limit = 12
+    candidates = Videos.objects.exclude(pk=video.pk).exclude(video="").order_by("-visitas", "pk")
+    recommendations = list(
+        candidates.filter(categorias__in=video.categorias.all())
+        .alias(shared_categories=Count("categorias"))
+        .order_by("-shared_categories", "-visitas", "pk")[:limit]
+    )
+    remaining = limit - len(recommendations)
+    if remaining:
+        recommended_ids = [item.pk for item in recommendations]
+        recommendations.extend(candidates.exclude(pk__in=recommended_ids)[:remaining])
+    return recommendations
+
+
 @require_safe
 def play_(request, id):
     video = get_object_or_404(Videos, pk=id)
@@ -188,7 +203,9 @@ def play_(request, id):
         raise Http404
     if request.method == "GET":
         Videos.objects.filter(pk=video.pk).update(visitas=F("visitas") + 1)
-    return render(request, "play.html", {"video": video})
+    return render(
+        request, "play.html", {"video": video, "recommended_videos": video_recommendations(video)}
+    )
 
 
 @require_safe

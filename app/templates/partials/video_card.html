@@ -4,7 +4,7 @@
     <div class="video-card__media{% if not video.miniatura %} video-card__media--placeholder{% endif %}"{% if video.miniatura %} data-skeleton{% endif %}>
       {% if video.miniatura %}
       <img class="video-card__thumb" alt="" width="640" height="360" decoding="async"
-           {% if forloop.first and not featured_thumbnail %}fetchpriority="high"{% else %}loading="lazy"{% endif %}
+           {% if forloop.first and not featured_thumbnail and not lazy_thumbnail %}fetchpriority="high"{% else %}loading="lazy"{% endif %}
            src="{% if forloop.first and featured_thumbnail %}{{ featured_thumbnail }}{% else %}{{ video.miniatura.url }}{% endif %}">
       {% endif %}
       <span class="video-card__play" aria-hidden="true"><span class="icon-play"></span></span>

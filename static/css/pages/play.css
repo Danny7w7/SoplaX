@@ -1,73 +1,58 @@
-/* SoplaX — Página de reproducción en modo teatro. */
+/* SoplaX — Reproducción y distribución de los espacios publicitarios. */
 @layer pages {
-  .theater {
-    position: relative;
-    isolation: isolate;
-    overflow: hidden;
-    border-bottom: 1px solid var(--color-border);
+  .play-top-ad {
+    display: grid;
+    justify-items: center;
+    width: min(100%, var(--container-max));
+    margin-inline: auto;
+    margin-block-start: var(--space-6);
   }
 
-  /* Luz ambiental a partir de la miniatura del video */
-  .theater__ambient {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
+  .play-page {
+    display: grid;
+    gap: var(--space-10);
+    padding-block-start: var(--space-6);
   }
 
-  .theater__ambient img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.3;
-    filter: blur(64px) saturate(1.1);
-    transform: scale(1.3);
+  .play-layout {
+    display: grid;
+    align-items: start;
+    gap: var(--space-6);
   }
 
-  .theater__ambient::after {
-    position: absolute;
-    inset: 0;
-    content: "";
-    background: linear-gradient(to bottom, var(--color-scrim), var(--color-background));
+  .play-sidebar {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-4);
+  }
+
+  .watch {
+    display: grid;
+    min-width: 0;
+    gap: var(--space-5);
   }
 
   .player {
+    position: relative;
     width: 100%;
-    margin-inline: auto;
     aspect-ratio: 16 / 9;
     overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
     background: var(--color-background);
   }
 
   .player__video {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: contain;
     background: var(--color-background);
   }
 
-  @media (min-width: 48rem) {
-    .theater {
-      padding: var(--space-6) var(--gutter);
-    }
-
-    /* El reproductor nunca supera el alto visible de la pantalla */
-    .player {
-      max-width: min(72rem, calc((100svh - var(--header-height) - var(--space-16)) * 16 / 9));
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-lg);
-    }
-  }
-
-  .watch {
-    display: grid;
-    gap: var(--space-6);
-    max-width: 76rem;
-    padding-block-start: var(--space-6);
-  }
-
   .watch__header {
     display: grid;
-    justify-items: start;
     gap: var(--space-3);
   }
 
@@ -78,10 +63,19 @@
     overflow-wrap: anywhere;
   }
 
+  .watch__details,
   .watch__meta {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: var(--space-2) var(--space-3);
+  }
+
+  .watch__details {
+    justify-content: space-between;
+  }
+
+  .watch__meta {
     color: var(--color-text-muted);
     font-size: var(--text-sm);
     font-variant-numeric: tabular-nums;
@@ -91,18 +85,6 @@
     margin-inline-end: var(--space-3);
     color: var(--color-border-strong);
     content: "•";
-  }
-
-  .watch__body {
-    display: grid;
-    align-items: start;
-    gap: var(--space-6);
-  }
-
-  @media (min-width: 64rem) {
-    .watch__body {
-      grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
-    }
   }
 
   .watch__description {
@@ -136,8 +118,8 @@
   }
 
   .watch__more {
-    min-height: var(--space-6);
-    margin-block-start: var(--space-3);
+    min-height: var(--control-height-sm);
+    margin-block-start: var(--space-2);
     padding: 0;
     border: 0;
     background: none;
@@ -152,10 +134,47 @@
 
   .watch__tags {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
     gap: var(--space-5);
   }
 
   .tag-group dd {
     margin: 0;
+  }
+
+  .play-bottom-ads {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-5);
+  }
+
+  .play-bottom-ads--desktop {
+    grid-template-columns: repeat(auto-fit, 300px);
+    justify-content: center;
+  }
+
+  .play-recommended__ad {
+    display: grid;
+    min-width: 0;
+    justify-items: center;
+    align-content: start;
+  }
+
+  .play-recommended__ad--rectangle {
+    grid-column: 1 / -1;
+  }
+
+  /* Un rectángulo de 300 px cabe en un móvil estrecho al usar también los márgenes del catálogo. */
+  @media (max-width: 22rem) {
+    .play-bottom-ads.ad-device--mobile,
+    .play-recommended__ad--rectangle {
+      margin-inline: calc(-1 * var(--gutter));
+    }
+  }
+
+  @media (min-width: 70rem) {
+    .play-layout--sidebar {
+      grid-template-columns: minmax(0, 1fr) clamp(300px, 26%, 336px);
+    }
   }
 }

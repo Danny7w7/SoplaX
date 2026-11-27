@@ -1,0 +1,89 @@
+@layer components {
+  .ad-slot {
+    display: grid;
+    min-inline-size: 0;
+    inline-size: min(100%, var(--ad-width, 100%));
+    margin-inline: auto;
+    gap: var(--space-1);
+  }
+
+  .ad-slot__label {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    line-height: var(--leading-tight);
+    text-align: center;
+  }
+
+  .ad-slot__creative {
+    position: relative;
+    inline-size: 100%;
+    block-size: var(--ad-height, auto);
+    aspect-ratio: var(--ad-ratio, auto);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+
+  .ad-slot__creative--preview {
+    outline: 1px dashed var(--color-border-strong);
+    outline-offset: -1px;
+    background: var(--color-surface-sunken);
+  }
+
+  .ad-slot__frame {
+    position: absolute;
+    inset: 0;
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    border: 0;
+    border-radius: inherit;
+  }
+
+  .ad-slot--970x90 {
+    --ad-width: 970px;
+    --ad-height: 90px;
+  }
+
+  .ad-slot--728x90 {
+    --ad-width: 728px;
+    --ad-height: 90px;
+  }
+
+  .ad-slot--320x50 {
+    --ad-width: 320px;
+    --ad-height: 50px;
+  }
+
+  .ad-slot--320x100 {
+    --ad-width: 320px;
+    --ad-height: 100px;
+  }
+
+  .ad-slot--300x250 {
+    --ad-width: 300px;
+    --ad-height: 250px;
+  }
+
+  .ad-slot--300x600 {
+    --ad-width: 300px;
+    --ad-height: 600px;
+  }
+
+  .ad-slot--native {
+    --ad-ratio: 16 / 9;
+  }
+}
+
+@layer utilities {
+  @media (width < 70rem) {
+    .ad-device--desktop {
+      display: none;
+    }
+  }
+
+  @media (width >= 70rem) {
+    .ad-device--mobile {
+      display: none;
+    }
+  }
+}

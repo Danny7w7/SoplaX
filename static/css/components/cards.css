@@ -1,5 +1,21 @@
 /* SoplaX — Tarjetas de video y grid del catálogo. */
 @layer components {
+  .catalog__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    margin-block-end: var(--space-6);
+    padding-block-end: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .catalog__title {
+    font-size: var(--text-2xl);
+    overflow-wrap: anywhere;
+  }
+
   .video-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
@@ -53,6 +69,10 @@
     display: none;
   }
 
+  .video-card__media--placeholder::before {
+    content: none;
+  }
+
   .video-card__thumb {
     width: 100%;
     height: 100%;
@@ -84,6 +104,18 @@
   .video-card__link:focus-visible .video-card__play {
     opacity: 1;
     transform: none;
+  }
+
+  .video-card__media--placeholder .video-card__play {
+    background: var(--color-surface-raised);
+    color: var(--color-text);
+    opacity: 1;
+    transform: none;
+  }
+
+  .video-card__link:is(:hover, :focus-visible) .video-card__media--placeholder .video-card__play {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
   }
 
   @media (hover: hover) and (prefers-reduced-motion: no-preference) {

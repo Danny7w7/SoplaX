@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from pathlib import Path
@@ -31,6 +32,14 @@ if ENVIRONMENT not in {"development", "production"}:
     raise ImproperlyConfigured("DJANGO_ENV debe ser development o production.")
 DEVELOPMENT = ENVIRONMENT == "development"
 DEBUG = DEVELOPMENT
+
+PLAY_AD_PREVIEW = DEVELOPMENT and os.getenv("SOPLAX_PLAY_AD_PREVIEW") == "1"
+try:
+    PLAY_ADS = json.loads(os.getenv("SOPLAX_PLAY_ADS", "{}"))
+except (ValueError, RecursionError):
+    PLAY_ADS = {}
+if not isinstance(PLAY_ADS, dict):
+    PLAY_ADS = {}
 
 SECRET_KEY = required_env("DJANGO_SECRET_KEY")
 if len(SECRET_KEY) < 50 or len(set(SECRET_KEY)) < 5 or SECRET_KEY.startswith("django-insecure-"):

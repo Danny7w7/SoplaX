@@ -1,0 +1,8 @@
+{% if slot %}
+<div class="ad-slot ad-slot--{{ slot.format }} ad-device--{{ slot.device }}"
+     data-ad-position="{{ slot.position }}" data-ad-device="{{ slot.device }}">
+  <p class="ad-slot__label">Publicidad</p>
+  <div class="ad-slot__creative{% if not slot.url %} ad-slot__creative--preview{% endif %}"
+       {% if slot.url %} data-ad-url="{{ slot.url }}" data-ad-width="{{ slot.width }}"{% if slot.eager %} data-ad-eager{% endif %}{% endif %}></div>
+</div>
+{% endif %}

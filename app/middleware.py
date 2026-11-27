@@ -6,6 +6,8 @@ from django.utils.cache import patch_cache_control
 from django_ratelimit.core import is_ratelimited
 from redis.exceptions import RedisError
 
+from .play_ads import get_play_ad_layout
+
 
 def client_ip(request):
     address = request.META.get("REMOTE_ADDR", "")
@@ -69,7 +71,6 @@ class ContentSecurityPolicyMiddleware:
                 f"media-src 'self'{media}",
                 "base-uri 'none'",
                 "object-src 'none'",
-                "frame-src 'none'",
                 "frame-ancestors 'none'",
                 "form-action 'self'",
             ]
@@ -78,6 +79,12 @@ class ContentSecurityPolicyMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
         if response.headers.get("Content-Type", "").split(";", 1)[0] == "text/html":
-            response.headers["Content-Security-Policy"] = self.policy
+            frame_sources = "'none'"
+            route = request.resolver_match
+            if response.status_code == 200 and route and route.view_name == "play":
+                origins = get_play_ad_layout().origins
+                if origins:
+                    frame_sources = " ".join(origins)
+            response.headers["Content-Security-Policy"] = f"{self.policy}; frame-src {frame_sources}"
             patch_cache_control(response, private=True, no_store=True)
         return response

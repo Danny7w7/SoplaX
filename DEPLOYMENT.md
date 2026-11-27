@@ -88,6 +88,27 @@ docker compose --env-file .env.production --profile postgres run --rm --no-deps 
 docker compose --env-file .env.production --profile postgres run --rm --no-deps web python manage.py convertir_miniaturas_webp --dry-run
 ```
 
+## Espacios publicitarios de Play
+
+Con `DJANGO_ENV=development` y `SOPLAX_PLAY_AD_PREVIEW=1`, Play muestra espacios de prueba sin solicitar creativos. En producción, cada variante se activa con `SOPLAX_PLAY_ADS`. La variable acepta un objeto JSON que contiene la posición, el dispositivo (`desktop` o `mobile`) y los campos `enabled`, `format` y `url`. Usa `enabled: true` y la URL HTTPS del iframe suministrado por el proveedor.
+
+| Posición | Escritorio desde 70 rem | Móvil y tablet |
+| --- | --- | --- |
+| `PLAY_TOP_BANNER` | `970x90` o `728x90` | `320x50` o `320x100` |
+| `PLAY_SIDEBAR_AD_1`, `PLAY_SIDEBAR_AD_2`, `PLAY_SIDEBAR_AD_3` | `300x250` o `300x600` | `300x250` tras los videos 3, 8 y 11 de recomendados, respectivamente |
+| `PLAY_BOTTOM_AD_1` | `300x250` | `300x250` debajo de la información |
+| `PLAY_BOTTOM_AD_2`, `PLAY_BOTTOM_AD_3` | `300x250` | — |
+| `PLAY_RECOMMENDED_NATIVE` | `native`, 16:9 flexible tras el quinto video recomendado | `native`, 16:9 flexible tras el quinto video recomendado |
+
+Para previsualizar la columna de dos anuncios de `300x600` y `300x250`, activa la vista de desarrollo y configura el primer lateral en `300x600` y el tercero con `enabled: false`.
+
+```dotenv
+SOPLAX_PLAY_AD_PREVIEW=1
+SOPLAX_PLAY_ADS='{"PLAY_SIDEBAR_AD_1":{"desktop":{"enabled":true,"format":"300x600"}},"PLAY_SIDEBAR_AD_3":{"desktop":{"enabled":false}}}'
+```
+
+En producción se reserva el espacio de cada variante activa con formato y URL válidos. El iframe se crea cuando su formato cabe en el dispositivo y se acepta el aviso de edad. El navegador difiere la carga de los anuncios que quedan fuera de la vista, salvo el banner superior. El creativo debe admitir un iframe con sandbox. La política de seguridad autoriza sus orígenes únicamente en Play.
+
 ## Base de datos con contenido
 
 Para pasar de MySQL a PostgreSQL, exporta los datos desde una copia de MySQL e impórtalos a una base PostgreSQL separada con el esquema de Django ya migrado. Valida la transferencia en pruebas antes del corte.
