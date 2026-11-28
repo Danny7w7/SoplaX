@@ -114,6 +114,133 @@ input[type="submit"],
     accent-color: var(--admin-light-link);
 }
 
+/* Listas: flecha propia, opciones con aire y la selección con el color del botón principal. */
+select {
+    --admin-select-icon: var(--body-quiet-color);
+    --admin-select-caret-size: 0.3125rem;
+    --admin-select-caret:
+        linear-gradient(45deg, transparent 50%, var(--admin-select-icon) 50%),
+        linear-gradient(135deg, var(--admin-select-icon) 50%, transparent 50%);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+select:hover {
+    --admin-select-icon: var(--body-fg);
+    border-color: var(--body-quiet-color);
+}
+
+select:focus,
+#changelist .actions select:focus {
+    --admin-select-icon: var(--admin-highlight);
+    border-color: var(--admin-highlight);
+}
+
+select:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+select:not([multiple]),
+#changelist .actions select {
+    appearance: none;
+    height: var(--control-height-sm);
+    padding: 0 var(--space-8) 0 var(--space-3);
+    border-radius: var(--radius-sm);
+    background-color: var(--body-bg);
+    background-image: var(--admin-select-caret);
+    background-position:
+        calc(100% - var(--space-3) - var(--admin-select-caret-size)) 50%,
+        calc(100% - var(--space-3)) 50%;
+    background-size: var(--admin-select-caret-size) var(--admin-select-caret-size);
+    background-repeat: no-repeat;
+}
+
+select[multiple] {
+    padding: var(--space-1);
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+
+select[multiple] option {
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+}
+
+select[multiple] option:hover {
+    background-color: var(--darkened-bg);
+}
+
+/* El degradado evita que el navegador sustituya el color al perder el foco. */
+select[multiple] option:checked,
+form .aligned select[multiple] option:checked {
+    background: linear-gradient(var(--default-button-bg), var(--default-button-bg));
+    color: var(--admin-default-button-fg);
+}
+
+.selector select {
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+}
+
+/* Navegadores con listas personalizables: menú desplegable a juego con el tema del admin. */
+@supports (appearance: base-select) {
+    select:not([multiple]),
+    select:not([multiple])::picker(select) {
+        appearance: base-select;
+    }
+
+    select:not([multiple]),
+    #changelist .actions select {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding-inline-end: var(--space-2);
+        background-image: none;
+    }
+
+    select::picker-icon {
+        margin-inline-start: auto;
+        color: var(--admin-select-icon);
+        transition: rotate var(--duration-base) var(--ease-standard);
+    }
+
+    select:open::picker-icon {
+        rotate: 180deg;
+    }
+
+    select::picker(select) {
+        margin-block: var(--space-1);
+        padding: var(--space-1);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background: var(--body-bg);
+        box-shadow: var(--shadow-overlay);
+        color: var(--body-fg);
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-color) transparent;
+    }
+
+    select:not([multiple]) option {
+        gap: var(--space-2);
+        padding: var(--space-2) var(--space-3);
+        border-radius: var(--radius-sm);
+    }
+
+    select:not([multiple]) option:is(:hover, :focus-visible) {
+        outline: none;
+        background-color: var(--darkened-bg);
+    }
+
+    select:not([multiple]) option:checked {
+        color: var(--admin-highlight);
+        font-weight: var(--font-weight-semibold);
+    }
+
+    select option::checkmark {
+        color: var(--admin-highlight);
+    }
+}
+
 #changelist-filter li.selected {
     border-left-color: var(--admin-highlight);
 }
