@@ -27,7 +27,7 @@ Al ejecutar Django directamente con `DJANGO_ENV=production` en el entorno del pr
 docker compose --env-file .env.production build web
 docker compose --env-file .env.production --profile postgres up -d --wait postgres redis
 docker compose --env-file .env.production --profile postgres run --rm --no-deps web python manage.py migrate --noinput
-docker compose --env-file .env.production --profile postgres up -d --no-build --wait web worker
+docker compose --env-file .env.production --profile postgres up -d --no-build --wait web worker preview_worker
 ```
 
 Si usas PostgreSQL externo, inicia Redis con `docker compose --env-file .env.production up -d --wait redis` y ejecuta la migración y el arranque con los comandos anteriores omitiendo `--profile postgres`. En una base existente, puedes revisar primero el plan con `python manage.py migrate --plan` en el contenedor web. Si el proveedor requiere una CA, monta el certificado en `web` y `worker`. Móntalo también en `seed` cuando importes el catálogo. Apunta `DB_SSL_CA` a la ruta dentro de los contenedores. Django usa esa CA para verificar el certificado y el nombre indicado en `DB_HOST`.
@@ -116,6 +116,30 @@ Cuando estén publicados los nombres en S3, abre PowerShell desde el proyecto lo
 .\venv\Scripts\python.exe manage.py normalizar_rutas_miniaturas seeds/miniaturas_webp.json --dry-run
 .\venv\Scripts\python.exe manage.py normalizar_rutas_miniaturas seeds/miniaturas_webp.json --aplicar
 ```
+
+## Vistas previas de las miniaturas
+
+Al dejar el cursor un segundo sobre una miniatura, el catálogo reproduce en bucle una vista previa sin sonido. Es un MP4 de unos 10 s a 360p, guardado en `upload/previews/` y armado con FFmpeg a partir de cinco fragmentos de 2 s tomados del 10 %, 30 %, 50 %, 70 % y 90 % del video. Los videos de menos de 12 s usan un solo fragmento.
+
+Cada carga o reemplazo de un MP4, desde el panel o desde Django Admin, encola la vista previa en la cola `video_previews`. El servicio `preview_worker` la procesa aparte del de correo. Al reemplazar el MP4, la vista previa anterior se retira y la nueva aparece cuando termina el trabajo. Mientras tanto, la tarjeta muestra solo la miniatura.
+
+Para crear las vistas previas del catálogo existente, aplica la migración, levanta el worker y simula el plan. `--dry-run` solo lee la duración de cada MP4; no crea archivos ni escribe en la base.
+
+```sh
+docker compose --env-file .env.production build web
+docker compose --env-file .env.production --profile postgres run --rm --no-deps web python manage.py migrate --plan
+docker compose --env-file .env.production --profile postgres run --rm --no-deps web python manage.py migrate --noinput
+docker compose --env-file .env.production --profile postgres up -d --no-build --wait web worker preview_worker
+docker compose --env-file .env.production --profile postgres run --rm --no-deps web python manage.py generar_previews_videos --dry-run
+```
+
+Revisa la salida y luego aplica por lotes. `--limite` acota cuántos videos se procesan en cada ejecución. Una segunda ejecución con `--aplicar` debe informar cero vistas previas creadas.
+
+```sh
+docker compose --env-file .env.production --profile postgres run --rm --no-deps web python manage.py generar_previews_videos --aplicar --limite 50
+```
+
+Si PostgreSQL es externo, omite `--profile postgres`. El paso a paso completo, con los permisos de S3 necesarios, está en [Vistas previas de las miniaturas](docs/README-vistas-previas.md).
 
 ## Espacios publicitarios
 

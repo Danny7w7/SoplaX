@@ -79,6 +79,97 @@ document.querySelectorAll("[data-skeleton] img").forEach((image) => {
   }
 });
 
+// Miniaturas: al dejar el cursor un segundo encima, reproduce en bucle la vista previa sin sonido.
+// Solo con ratón; no se activa en pantallas táctiles, con «Reducir movimiento» ni con ahorro de datos.
+{
+  const PREVIEW_DELAY_MS = 1000;
+  const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  let active = null;
+
+  const previewAllowed = (event) =>
+    event.pointerType === "mouse" && finePointer.matches && !reducedMotion.matches &&
+    !navigator.connection?.saveData;
+
+  const stopPreview = () => {
+    if (!active) {
+      return;
+    }
+    const { host, timer, video, progress } = active;
+    active = null;
+    window.clearTimeout(timer);
+    host.classList.remove("is-previewing");
+    if (video) {
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+      video.remove();
+    }
+    progress?.remove();
+  };
+
+  const startPreview = (preview) => {
+    const { host } = preview;
+    const video = document.createElement("video");
+    const progress = document.createElement("span");
+    video.className = "thumb-preview";
+    video.muted = true;
+    video.defaultMuted = true;
+    video.loop = true;
+    video.playsInline = true;
+    video.preload = "auto";
+    video.disablePictureInPicture = true;
+    video.setAttribute("aria-hidden", "true");
+    video.tabIndex = -1;
+    progress.className = "thumb-preview__progress";
+    progress.setAttribute("aria-hidden", "true");
+
+    const isCurrent = () => active === preview;
+    const trackProgress = () => {
+      if (!isCurrent()) {
+        return;
+      }
+      if (video.duration > 0) {
+        progress.style.setProperty("--preview-progress", String(video.currentTime / video.duration));
+      }
+      window.requestAnimationFrame(trackProgress);
+    };
+    video.addEventListener("playing", () => {
+      if (isCurrent()) {
+        host.classList.add("is-previewing");
+        window.requestAnimationFrame(trackProgress);
+      }
+    }, { once: true });
+    video.addEventListener("error", () => isCurrent() && stopPreview(), { once: true });
+
+    preview.video = video;
+    preview.progress = progress;
+    video.src = host.dataset.previewSrc;
+    host.append(video, progress);
+    video.play().catch(() => isCurrent() && stopPreview());
+  };
+
+  document.addEventListener("pointerover", (event) => {
+    const host = event.target.closest?.("[data-preview-src]");
+    if (!host || host === active?.host || !previewAllowed(event)) {
+      return;
+    }
+    stopPreview();
+    const preview = { host };
+    preview.timer = window.setTimeout(() => active === preview && startPreview(preview), PREVIEW_DELAY_MS);
+    active = preview;
+  });
+
+  document.addEventListener("pointerout", (event) => {
+    if (active && !active.host.contains(event.relatedTarget)) {
+      stopPreview();
+    }
+  });
+
+  document.addEventListener("visibilitychange", () => document.hidden && stopPreview());
+  window.addEventListener("pagehide", stopPreview);
+}
+
 // Formularios: indicador de carga en el botón de envío.
 document.querySelectorAll("form[data-loading]").forEach((form) => {
   form.addEventListener("submit", (event) => {

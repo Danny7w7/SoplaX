@@ -48,6 +48,12 @@ services:
     command: ["python", "manage.py", "rqworker", "account_mail", "--serializer", "rq.serializers.JSONSerializer"]
     stop_grace_period: 30s
 
+  # Crea con FFmpeg las vistas previas de las miniaturas; separado para no retrasar los correos.
+  preview_worker:
+    <<: *app
+    command: ["python", "manage.py", "rqworker", "video_previews", "--serializer", "rq.serializers.JSONSerializer"]
+    stop_grace_period: 120s
+
   seed:
     <<: *app
     profiles: [seed]

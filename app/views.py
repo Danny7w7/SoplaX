@@ -30,6 +30,7 @@ from .forms import AccountEmailForm, AccountSetPasswordForm, RegistrationForm
 from .middleware import auth_service_unavailable
 from .models import RegistroPendiente, Usuario, Videos
 from .play_ads import AdLayout, get_home_ad_layout, get_play_ad_layout
+from .video_previews import queue_video_preview
 from .video_uploads import VideoManagementForm, VideoUploadForm, store_video_uploads, thumbnail_webp_content
 
 
@@ -119,7 +120,7 @@ def can_view_video_manager(user):
 
 def video_assets(video):
     assets = []
-    for field_name in ("video", "miniatura"):
+    for field_name in ("video", "miniatura", "preview"):
         asset = getattr(video, field_name)
         if asset and asset.name:
             assets.append((asset.storage, asset.name))
@@ -136,7 +137,9 @@ def delete_unreferenced_video_assets(assets, *, using=None):
             continue
         deleted.add(identity)
         try:
-            still_referenced = Videos.objects.using(using).filter(Q(video=name) | Q(miniatura=name)).exists()
+            still_referenced = Videos.objects.using(using).filter(
+                Q(video=name) | Q(miniatura=name) | Q(preview=name)
+            ).exists()
         except DatabaseError:
             logger.exception("No se pudo comprobar si el archivo sigue vinculado: %s", name)
             failed.append(name)
@@ -199,6 +202,7 @@ def video_manager_add(request):
                 with transaction.atomic(using=using):
                     video.save(using=using)
                     form.save_m2m()
+                    queue_video_preview(video, using=using)
         except (DatabaseError, OSError, BotoCoreError, ClientError):
             logger.exception("No se pudo crear un video desde el panel propio.")
             form.add_error(None, "No se pudo guardar el video. Vuelve a seleccionar los archivos.")
@@ -229,6 +233,7 @@ def video_manager_edit(request, video_id):
         for field_name in ("video", "miniatura")
         if getattr(video, field_name) and getattr(video, field_name).name
     }
+    current_preview = (video.preview.storage, video.preview.name) if video.preview else None
     original_premium = video.es_premium
     form = VideoManagementForm(request.POST or None, request.FILES or None, instance=video)
     if request.method == "POST" and form.is_valid():
@@ -241,6 +246,8 @@ def video_manager_edit(request, video_id):
             form.cleaned_data["es_premium"] != original_premium and "miniatura" in current_assets
         )
         old_assets = [current_assets[field_name] for field_name in uploaded_fields if field_name in current_assets]
+        if "video" in uploaded_fields and current_preview:
+            old_assets.append(current_preview)
         try:
             video = form.save(commit=False)
             if video.es_premium != original_premium and "miniatura" not in uploaded_fields and "miniatura" in current_assets:
@@ -256,6 +263,8 @@ def video_manager_edit(request, video_id):
                 with transaction.atomic(using=using):
                     video.save(using=using, update_fields=form.video_update_fields() | set(uploaded_fields))
                     form.save_m2m()
+                    if "video" in uploaded_fields:
+                        queue_video_preview(video, using=using)
         except (DatabaseError, OSError, BotoCoreError, ClientError, ValueError):
             logger.exception("No se pudo actualizar el video %s desde el panel propio.", video_id)
             form.add_error(

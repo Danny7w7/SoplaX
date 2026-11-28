@@ -2,7 +2,7 @@
 <article class="video-card">
   <a class="video-card__link" href="{{ video.get_absolute_url }}" aria-labelledby="video-card-title-{{ video.pk }}"
      {% if video.duracion_segundos %}aria-describedby="card-video-duration-{{ video.pk }}"{% endif %}>
-    <div class="video-card__media{% if not video.miniatura %} video-card__media--placeholder{% endif %}"{% if video.miniatura %} data-skeleton{% endif %}>
+    <div class="video-card__media{% if not video.miniatura %} video-card__media--placeholder{% endif %}"{% if video.miniatura %} data-skeleton{% endif %}{% if video.preview %} data-preview-src="{{ video.preview.url }}"{% endif %}>
       {% if video.miniatura %}
       <img class="video-card__thumb" alt="" width="640" height="360" decoding="async"
            {% if forloop.first and not featured_thumbnail and not lazy_thumbnail %}fetchpriority="high"{% else %}loading="lazy"{% endif %}

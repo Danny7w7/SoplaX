@@ -482,7 +482,7 @@ class CatalogSeedTests(TestCase):
 
 class LegacyMigrationTests(TransactionTestCase):
     initial = ("app", "0001_initial")
-    latest = ("app", "0008_segmentar_miniaturas_premium")
+    latest = ("app", "0010_videos_preview")
 
     def setUp(self):
         executor = MigrationExecutor(connection)
@@ -516,6 +516,8 @@ class LegacyMigrationTests(TransactionTestCase):
         self.assertEqual(video.video.name, "upload/videos/legacy.mp4")
         self.assertEqual(video.miniatura.name, "upload/photos/legacy.png")
         self.assertTrue(video.es_premium)
+        self.assertIsNone(video.duracion_segundos)
+        self.assertEqual(video.preview.name, "")
         self.assertIsNone(video.idioma_id)
         self.assertFalse(video.categorias.exists())
         self.assertFalse(video.actores.exists())

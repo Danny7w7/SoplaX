@@ -40,7 +40,8 @@
     </div>
     <a class="hero__poster{% if not featured_thumbnail %} hero__poster--placeholder{% endif %}"
        href="{{ featured.get_absolute_url }}" aria-label="Reproducir {{ featured.nombre }}"
-       {% if featured.duracion_segundos %}aria-describedby="featured-video-duration-{{ featured.pk }}"{% endif %}>
+       {% if featured.duracion_segundos %}aria-describedby="featured-video-duration-{{ featured.pk }}"{% endif %}
+       {% if featured.preview %}data-preview-src="{{ featured.preview.url }}"{% endif %}>
       {% if featured_thumbnail %}
       <img src="{{ featured_thumbnail }}" alt="" width="1280" height="720" fetchpriority="high" decoding="async">
       {% else %}

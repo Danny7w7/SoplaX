@@ -252,4 +252,9 @@ if not DEVELOPMENT:
             "SERIALIZER": "rq.serializers.JSONSerializer",
             "DEFAULT_TIMEOUT": 20,
         },
+        "video_previews": {
+            "URL": redis_url,
+            "SERIALIZER": "rq.serializers.JSONSerializer",
+            "DEFAULT_TIMEOUT": 360,
+        },
     }
