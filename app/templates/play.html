@@ -3,6 +3,7 @@
 
 {% block title %}{{ video.nombre }} · SoplaX{% endblock %}
 {% block description %}{{ video.descripcion|truncatechars:155 }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ canonical_url }}">{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="{% static 'css/components/ad-slots.css' %}">

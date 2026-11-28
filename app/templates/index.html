@@ -21,14 +21,14 @@
       <p class="hero__description">{{ featured.descripcion }}</p>
       {% endif %}
       <div class="hero__actions">
-        <a class="button button--primary button--lg" href="{% url 'play' id=featured.id %}">
+        <a class="button button--primary button--lg" href="{{ featured.get_absolute_url }}">
           <span class="icon-play" aria-hidden="true"></span>Reproducir
         </a>
         <span class="hero__meta">{{ featured.visitas|vistas }}</span>
       </div>
     </div>
     <a class="hero__poster{% if not featured_thumbnail %} hero__poster--placeholder{% endif %}"
-       href="{% url 'play' id=featured.id %}" aria-label="Reproducir {{ featured.nombre }}">
+       href="{{ featured.get_absolute_url }}" aria-label="Reproducir {{ featured.nombre }}">
       {% if featured_thumbnail %}
       <img src="{{ featured_thumbnail }}" alt="" width="1280" height="720" fetchpriority="high" decoding="async">
       {% else %}

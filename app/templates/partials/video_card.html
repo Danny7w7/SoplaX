@@ -1,6 +1,6 @@
 {% load soplax %}
 <article class="video-card">
-  <a class="video-card__link" href="{% url 'play' id=video.id %}">
+  <a class="video-card__link" href="{{ video.get_absolute_url }}">
     <div class="video-card__media{% if not video.miniatura %} video-card__media--placeholder{% endif %}"{% if video.miniatura %} data-skeleton{% endif %}>
       {% if video.miniatura %}
       <img class="video-card__thumb" alt="" width="640" height="360" decoding="async"

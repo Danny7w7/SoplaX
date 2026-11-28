@@ -109,10 +109,12 @@ class PlayAdsTests(SimpleTestCase):
         self.assertNotIn("<iframe", markup)
 
         factory = RequestFactory()
-        play = factory.get(reverse("play", args=[1]))
+        play = factory.get(reverse("video_detail", args=["ejemplo", 1]))
         play.resolver_match = resolve(play.path)
         home = factory.get(reverse("home"))
         home.resolver_match = resolve(home.path)
+        legacy = factory.get(reverse("play", args=[1]))
+        legacy.resolver_match = resolve(legacy.path)
 
         middleware = ContentSecurityPolicyMiddleware(lambda request: HttpResponse())
         self.assertIn(
@@ -120,6 +122,7 @@ class PlayAdsTests(SimpleTestCase):
             middleware(play)["Content-Security-Policy"].split("; "),
         )
         self.assertIn("frame-src 'none'", middleware(home)["Content-Security-Policy"].split("; "))
+        self.assertIn("frame-src 'none'", middleware(legacy)["Content-Security-Policy"].split("; "))
         self.assertIn("frame-ancestors 'none'", middleware(play)["Content-Security-Policy"].split("; "))
 
         not_found = ContentSecurityPolicyMiddleware(lambda request: HttpResponse(status=404))

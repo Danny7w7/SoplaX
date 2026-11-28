@@ -1,5 +1,4 @@
 from django.test import TestCase
-from django.urls import reverse
 
 from .models import Categoria, Videos
 
@@ -11,7 +10,7 @@ class PlayRecommendationsTests(TestCase):
         return item
 
     def recommendations_for(self, video):
-        response = self.client.get(reverse("play", args=[video.pk]))
+        response = self.client.get(video.get_absolute_url())
         self.assertEqual(response.status_code, 200)
         return response.context["recommended_videos"]
 

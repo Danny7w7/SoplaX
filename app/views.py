@@ -15,7 +15,7 @@ from django.core.paginator import Paginator
 from django.db import DatabaseError, IntegrityError, router, transaction
 from django.db.models import Count, F, Q, Sum, Value
 from django.db.models.functions import Replace
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, HttpResponsePermanentRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -450,14 +450,24 @@ def video_recommendations(video):
 
 
 @require_safe
-def play_(request, id):
-    video = get_object_or_404(Videos, pk=id)
-    if not video.video:
-        raise Http404
+def play_(request, id, slug=None):
+    video = get_object_or_404(Videos.objects.exclude(video=""), pk=id)
+    canonical_path = video.get_absolute_url()
+    if slug is None or request.path != canonical_path:
+        query = request.GET.urlencode()
+        target = f"{canonical_path}?{query}" if query else canonical_path
+        return HttpResponsePermanentRedirect(target)
+
     if request.method == "GET":
         Videos.objects.filter(pk=video.pk).update(visitas=F("visitas") + 1)
     return render(
-        request, "play.html", {"video": video, "recommended_videos": video_recommendations(video)}
+        request,
+        "play.html",
+        {
+            "video": video,
+            "canonical_url": f"{settings.PUBLIC_BASE_URL}{canonical_path}",
+            "recommended_videos": video_recommendations(video),
+        },
     )
 
 

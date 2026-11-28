@@ -261,7 +261,7 @@ class CatalogSecurityTests(TestCase):
         home = self.client.get(reverse("home"), {"search": "catálogo"})
         self.assertContains(home, video.nombre)
         self.assertIn("no-store", home["Cache-Control"])
-        playback = reverse("play", args=[video.pk])
+        playback = video.get_absolute_url()
         self.client.head(playback)
         video.refresh_from_db()
         self.assertEqual(video.visitas, 2)
@@ -288,7 +288,7 @@ class FrontendTests(TestCase):
         )
         video.categorias.add(Categoria.objects.create(nombre="Categoría visible"))
         pages = ["home", "login", "register", "recover", "account_email_sent", "redirect"]
-        urls = [reverse(name) for name in pages] + [reverse("play", args=[video.pk])]
+        urls = [reverse(name) for name in pages] + [video.get_absolute_url()]
         for url in urls:
             with self.subTest(url=url):
                 response = self.client.get(url)
@@ -303,7 +303,7 @@ class FrontendTests(TestCase):
 
         home = self.client.get(reverse("home"))
         self.assertContains(home, "12,4 k vistas", count=2)
-        playback = self.client.get(reverse("play", args=[video.pk]))
+        playback = self.client.get(video.get_absolute_url())
         self.assertContains(playback, "Categoría visible")
         self.assertContains(playback, "upload/Miniaturas/Premium/sample.webp")
 

@@ -8,7 +8,6 @@ from django.core.exceptions import PermissionDenied
 from django.db import DatabaseError, router, transaction
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
-from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.views.decorators.http import require_http_methods
@@ -99,7 +98,7 @@ class VideosAdmin(admin.ModelAdmin):
                         format_html(
                             'Se publicó «{}». <a href="{}">Ver video</a>.',
                             video.nombre,
-                            reverse("play", args=[video.pk]),
+                            video.get_absolute_url(),
                         ),
                         level="success",
                     )

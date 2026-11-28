@@ -53,7 +53,7 @@
     <div class="video-manager__list">
       {% for managed_video in videos %}
       <article class="video-manager__row">
-        <a class="video-manager__thumb" href="{% url 'play' managed_video.pk %}" aria-label="Ver {{ managed_video.nombre }}">
+        <a class="video-manager__thumb" href="{{ managed_video.get_absolute_url }}" aria-label="Ver {{ managed_video.nombre }}">
           {% if managed_video.miniatura %}
           <img src="{{ managed_video.miniatura.url }}" alt="Miniatura de {{ managed_video.nombre }}" loading="lazy">
           {% else %}
@@ -81,7 +81,7 @@
             </ul>
           </div>
           <div class="video-manager__actions" aria-label="Acciones para {{ managed_video.nombre }}">
-            <a class="button button--secondary button--sm" href="{% url 'play' managed_video.pk %}">Ver</a>
+            <a class="button button--secondary button--sm" href="{{ managed_video.get_absolute_url }}">Ver</a>
             {% if can_change %}
             <a class="button button--ghost button--sm" href="{% url 'video_manager_edit' managed_video.pk %}">Editar</a>
             {% endif %}

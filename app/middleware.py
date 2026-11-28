@@ -81,7 +81,7 @@ class ContentSecurityPolicyMiddleware:
         if response.headers.get("Content-Type", "").split(";", 1)[0] == "text/html":
             frame_sources = "'none'"
             route = request.resolver_match
-            if response.status_code == 200 and route and route.view_name == "play":
+            if response.status_code == 200 and route and route.view_name == "video_detail":
                 origins = get_play_ad_layout().origins
                 if origins:
                     frame_sources = " ".join(origins)

@@ -21,7 +21,7 @@
       <p class="video-manager__lead">{% if is_editing %}Actualiza los detalles, la clasificación o los archivos.{% else %}Completa los detalles y selecciona los archivos para publicar.{% endif %}</p>
     </div>
     {% if is_editing %}
-    <a class="button button--secondary" href="{% url 'play' managed_video.pk %}">Ver video</a>
+    <a class="button button--secondary" href="{{ managed_video.get_absolute_url }}">Ver video</a>
     {% endif %}
   </header>
 

@@ -123,7 +123,7 @@ class VideoUploadTests(TestCase):
         self.assertEqual(entry.action_flag, ADDITION)
         self.assertEqual(entry.object_id, str(video.pk))
         self.assertContains(response, "Ver video")
-        self.assertContains(response, reverse("play", args=[video.pk]))
+        self.assertContains(response, video.get_absolute_url())
 
     def test_staff_can_publish_nonpremium_thumbnail_to_its_folder(self):
         self.client.force_login(self.publisher)

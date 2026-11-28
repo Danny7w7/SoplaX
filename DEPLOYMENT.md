@@ -116,6 +116,12 @@ SOPLAX_PLAY_ADS='{"PLAY_SIDEBAR_AD_1":{"desktop":{"enabled":true,"format":"300x6
 
 En producción se reserva el espacio de cada variante activa con formato y URL válidos. El iframe se crea cuando su formato cabe en el dispositivo y se acepta el aviso de edad. El navegador difiere la carga de los anuncios que quedan fuera de la vista, salvo el banner superior. El creativo debe admitir un iframe con sandbox. La política de seguridad autoriza sus orígenes únicamente en Play.
 
+## Indexación de páginas de video
+
+Las páginas públicas usan rutas como `/videos/titulo-del-video-5/`. Los enlaces anteriores y los títulos antiguos redirigen con `301` a la URL canónica. Los enlaces canónicos, el índice `/sitemap.xml` y su referencia en `/robots.txt` usan el origen de `DJANGO_PUBLIC_BASE_URL`.
+
+Tras desplegar, abre `/robots.txt` y `/sitemap.xml` desde el dominio público. Envía el índice en Google Search Console e inspecciona una URL anterior y su destino canónico. El sitemap lista las páginas de reproducción y se actualiza con el catálogo.
+
 ## Base de datos con contenido
 
 Para pasar de MySQL a PostgreSQL, exporta los datos desde una copia de MySQL e impórtalos a una base PostgreSQL separada con el esquema de Django ya migrado. Valida la transferencia en pruebas antes del corte.

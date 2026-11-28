@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.urls import reverse
+from django.utils.text import slugify
 
 
 def normalize_account_email(email):
@@ -78,3 +80,7 @@ class Videos(models.Model):
     class Meta:
         verbose_name = "video"
         verbose_name_plural = "videos"
+
+    def get_absolute_url(self):
+        slug = slugify(self.nombre.replace("_", "-")) or "video"
+        return reverse("video_detail", kwargs={"slug": slug, "id": self.pk})

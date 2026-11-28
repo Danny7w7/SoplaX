@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.contrib.auth.views import LoginView, LogoutView, PasswordResetCompleteView
 from django.urls import path
 
-from app import views
+from app import video_sitemaps, views
 from app.forms import EmailLoginForm
 
 
@@ -20,6 +20,9 @@ urlpatterns = [
     path("admin/videos/<int:video_id>/eliminar/", views.video_manager_delete, name="video_manager_delete"),
     path("admin/", admin.site.urls),
     path("", views.index, name="home"),
+    path("robots.txt", video_sitemaps.robots_txt, name="robots_txt"),
+    path("sitemap.xml", video_sitemaps.sitemap_index, name="sitemap_index"),
+    path("sitemap-videos-<int:page>.xml", video_sitemaps.sitemap_videos, name="sitemap_videos"),
     path("register/", views.register, name="register"),
     path("register/confirm/", views.register_confirm, name="register_confirm"),
     path("register/confirm/<str:token>/", views.register_token, name="register_token"),
@@ -37,7 +40,10 @@ urlpatterns = [
         PasswordResetCompleteView.as_view(template_name="password_reset_complete.html"),
         name="password_reset_complete",
     ),
+    path("videos/<slug:slug>-<int:id>/", views.play_, name="video_detail"),
+    path("videos/<slug:slug>-<int:id>", views.play_),
     path("play/<int:id>/", views.play_, name="play"),
+    path("play/<int:id>", views.play_),
     path("redirect/", views.redirect_, name="redirect"),
 ]
 
