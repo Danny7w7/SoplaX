@@ -13,6 +13,7 @@ from django.utils.html import format_html
 from django.views.decorators.http import require_http_methods
 
 from .models import Actor, Categoria, Idioma, Postura, Usuario, Videos
+from .video_previews import discard_preview_file, queue_video_preview
 from .video_uploads import VideoFileForm, VideoUploadForm, store_video_uploads
 
 
@@ -77,6 +78,12 @@ class VideosAdmin(admin.ModelAdmin):
             obj.save(update_fields=form.video_update_fields())
         else:
             super().save_model(request, obj, form, change)
+        if not change or "video" in form.changed_data:
+            using = router.db_for_write(self.model)
+            queue_video_preview(obj, using=using)
+            replaced_preview = getattr(form, "replaced_preview_name", "")
+            if change and replaced_preview:
+                transaction.on_commit(lambda: discard_preview_file(replaced_preview, using=using), using=using)
 
     @method_decorator(require_http_methods(["GET", "HEAD", "POST"]))
     def add_view(self, request, form_url="", extra_context=None):

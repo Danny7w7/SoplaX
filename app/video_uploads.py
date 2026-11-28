@@ -44,12 +44,15 @@ class VideoFileForm(forms.ModelForm):
                 self.instance.duracion_segundos = read_uploaded_video_duration(video)
             except VideoDurationError as error:
                 raise forms.ValidationError(str(error), code="video_duration") from error
+            # La vista previa del MP4 anterior deja de servir; el trabajo en segundo plano crea la nueva.
+            self.replaced_preview_name = self.instance.preview.name or ""
+            self.instance.preview = ""
         return video
 
     def video_update_fields(self):
         fields = {field.name for field in Videos._meta.concrete_fields if field.name in self.changed_data}
         if "video" in fields:
-            fields.add("duracion_segundos")
+            fields.update({"duracion_segundos", "preview"})
         return fields
 
 

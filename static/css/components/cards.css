@@ -141,6 +141,41 @@
     white-space: nowrap;
   }
 
+  /* Vista previa al pasar el cursor (la inserta app.js en [data-preview-src]) */
+  .thumb-preview {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: var(--color-surface);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-base) var(--ease-standard);
+  }
+
+  .thumb-preview__progress {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 1;
+    height: var(--space-1);
+    background: var(--color-primary);
+    opacity: 0;
+    pointer-events: none;
+    transform: scaleX(var(--preview-progress, 0));
+    transform-origin: left center;
+  }
+
+  .is-previewing > :is(.thumb-preview, .thumb-preview__progress) {
+    opacity: 1;
+  }
+
+  .video-card__media.is-previewing .video-card__play,
+  .hero__poster.is-previewing .icon-play {
+    opacity: 0;
+  }
+
   .video-card__title {
     display: -webkit-box;
     overflow: hidden;

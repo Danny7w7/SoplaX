@@ -19,7 +19,8 @@ class VideoDurationError(Exception):
     """A duration could not be read. Messages are safe to show to operators."""
 
 
-def _probe_duration(source, *, remote=False):
+def mp4_input_options(*, remote=False):
+    """Opciones de entrada de FFmpeg que limitan el acceso al MP4 indicado."""
     if remote:
         source_options = [
             "-protocol_whitelist", "https,tls,tcp",
@@ -29,9 +30,12 @@ def _probe_duration(source, *, remote=False):
         ]
     else:
         source_options = ["-protocol_whitelist", "file"]
+    return [*source_options, "-f", "mov", "-enable_drefs", "0", "-use_absolute_path", "0"]
+
+
+def _probe_duration(source, *, remote=False):
     command = [
-        "ffprobe", "-v", "error", *source_options,
-        "-f", "mov", "-enable_drefs", "0", "-use_absolute_path", "0",
+        "ffprobe", "-v", "error", *mp4_input_options(remote=remote),
         "-select_streams", "V", "-show_entries", "format=duration:stream=codec_type",
         "-of", "json", "-i", str(source),
     ]
@@ -80,16 +84,25 @@ def read_uploaded_video_duration(upload):
         upload.seek(0)
 
 
-def read_stored_video_duration(storage, name):
+def stored_video_source(storage, name, *, expire=2 * PROBE_TIMEOUT_SECONDS):
+    """Devuelve la ruta local o la URL firmada de S3 de un MP4 guardado, y si es remota."""
     remote = isinstance(storage, S3Storage)
     try:
         if remote:
-            source = storage.url(name, expire=2 * PROBE_TIMEOUT_SECONDS, http_method="GET")
+            source = storage.url(name, expire=expire, http_method="GET")
             if urlsplit(source).scheme != "https":
                 raise VideoDurationError("La URL del video en S3 debe usar HTTPS.")
         else:
             source = storage.path(name)
     except (BotoCoreError, ClientError, NotImplementedError, OSError, SuspiciousOperation, ValueError):
         raise VideoDurationError("No se pudo acceder al archivo de video guardado.") from None
+    return source, remote
 
+
+def read_local_video_duration(path):
+    return _probe_duration(path)
+
+
+def read_stored_video_duration(storage, name):
+    source, remote = stored_video_source(storage, name)
     return _probe_duration(source, remote=remote)
