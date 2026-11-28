@@ -3,6 +3,7 @@
 
 {% block studio_title %}{% if is_editing %}Editar video{% else %}Subir video{% endif %}{% endblock %}
 {% block studio_styles %}<link rel="stylesheet" href="{% static 'css/pages/video-manager.css' %}">{% endblock %}
+{% block scripts %}<script src="{% static 'js/choices.js' %}" defer></script>{% endblock %}
 
 {% block studio_content %}
 <header class="studio-head">
@@ -48,7 +49,7 @@
             <a href="{% url 'studio_catalog' 'actores' %}">Actores</a>,
             <a href="{% url 'studio_catalog' 'idiomas' %}">Idiomas</a> o
             <a href="{% url 'studio_catalog' 'posturas' %}">Posturas</a>.
-            Mantén pulsada Ctrl (⌘ en Mac) para elegir varias.
+            <span data-choices-hint>Mantén pulsada Ctrl (⌘ en Mac) para elegir varias.</span>
           </p>
           {% include "admin/video_upload_field.html" with field=form.idioma only %}
           {% include "admin/video_upload_field.html" with field=form.categorias only %}
