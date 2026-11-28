@@ -71,8 +71,9 @@
     font-size: var(--text-xl);
   }
 
-  /* Buscador */
+  /* Buscador: campo de 44 px; la lupa es el botón de enviar y se muestra a la izquierda. */
   .search {
+    --search-ring: transparent;
     display: flex;
     align-items: center;
     gap: var(--space-1);
@@ -80,14 +81,17 @@
     width: 100%;
     max-width: 40rem;
     min-width: 0;
+    min-height: var(--control-height);
     padding: var(--space-1);
-    padding-inline-start: var(--space-3);
+    padding-inline-end: var(--space-3);
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-lg);
     background: var(--color-surface);
+    box-shadow: 0 0 0 3px var(--search-ring);
     transition:
       border-color var(--duration-fast) var(--ease-standard),
-      box-shadow var(--duration-fast) var(--ease-standard);
+      background-color var(--duration-fast) var(--ease-standard),
+      box-shadow var(--duration-base) var(--ease-standard);
   }
 
   .search:hover {
@@ -95,46 +99,16 @@
   }
 
   .search:focus-within {
+    --search-ring: var(--color-primary-subtle);
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 1px var(--color-accent);
-  }
-
-  .search__icon {
-    position: relative;
-    flex: 0 0 1.25rem;
-    height: 1.25rem;
-    color: var(--color-text-muted);
-  }
-
-  .search__icon::before,
-  .search__icon::after {
-    position: absolute;
-    content: "";
-  }
-
-  .search__icon::before {
-    inset: 0.125rem auto auto 0.0625rem;
-    width: 0.8rem;
-    height: 0.8rem;
-    border: 2px solid currentColor;
-    border-radius: 50%;
-  }
-
-  .search__icon::after {
-    top: 0.875rem;
-    left: 0.7rem;
-    width: 0.42rem;
-    height: 2px;
-    border-radius: 1px;
-    background: currentColor;
-    transform: rotate(45deg);
+    background: color-mix(in oklab, var(--color-surface) 70%, var(--color-surface-raised));
   }
 
   .search__input {
     flex: 1;
     min-width: 0;
     min-height: var(--control-height-sm);
-    padding: 0 var(--space-1);
+    padding: 0;
     border: 0;
     background: transparent;
     color: var(--color-text);
@@ -160,43 +134,52 @@
     display: inline-grid;
     flex: none;
     place-items: center;
-    min-height: var(--control-height-sm);
+    width: var(--control-height-sm);
+    height: var(--control-height-sm);
+    padding: 0;
     border: 0;
     border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-text-muted);
     text-decoration: none;
+    cursor: pointer;
     transition:
       background-color var(--duration-fast) var(--ease-standard),
       color var(--duration-fast) var(--ease-standard);
   }
 
-  .search__clear {
-    width: var(--control-height-sm);
-    color: var(--color-text-muted);
-    font-size: var(--text-xl);
-    line-height: 1;
+  .search__clear svg,
+  .search__submit svg {
+    width: 1.25rem;
+    height: 1.25rem;
   }
 
-  .search__clear:hover {
+  .search__clear svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .search__clear:hover,
+  .search__submit:hover {
     background: var(--color-surface-raised);
     color: var(--color-text);
   }
 
+  /* La lupa va primero visualmente; en el orden del teclado sigue después del campo. */
   .search__submit {
-    padding-inline: var(--space-4);
-    background: var(--color-surface-raised);
-    color: var(--color-text);
-    font-size: var(--text-sm);
-    font-weight: var(--font-weight-semibold);
+    order: -1;
   }
 
   /* El violeta aparece solo cuando el usuario está buscando */
   .search:focus-within .search__submit {
-    background: var(--color-primary);
-    color: var(--color-on-primary);
+    color: var(--color-accent);
   }
 
-  .search:focus-within .search__submit:hover {
-    background: var(--color-primary-hover);
+  .search__submit:focus-visible,
+  .search__clear:focus-visible {
+    outline-offset: 0;
   }
 
   /* Cuenta */

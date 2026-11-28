@@ -3,13 +3,24 @@
     {% include "partials/brand.html" %}
     <form class="search" method="get" action="{% url 'home' %}" role="search" id="buscar">
       <label class="visually-hidden" for="search-input">Buscar por título</label>
-      <span class="search__icon" aria-hidden="true"></span>
       <input class="search__input" id="search-input" type="search" name="search" value="{{ query }}"
-             placeholder="Buscar por título…" maxlength="100" autocomplete="off" enterkeyhint="search">
+             placeholder="Buscar por título…" maxlength="100" autocomplete="off" enterkeyhint="search"
+             aria-keyshortcuts="/">
       {% if query %}
-      <a class="search__clear" href="{% url 'home' %}" aria-label="Limpiar búsqueda"><span aria-hidden="true">×</span></a>
+      <a class="search__clear" href="{% url 'home' %}" aria-label="Limpiar búsqueda" title="Limpiar búsqueda">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m7 7 10 10M17 7 7 17"/></svg>
+      </a>
       {% endif %}
-      <button class="search__submit" type="submit">Buscar</button>
+      {% comment %}
+        Icono «search» de Lucide (https://lucide.dev), derivado de Feather.
+        Licencia MIT. Copyright (c) 2013-present Cole Bemis. Copyright (c) 2026 Lucide Icons and Contributors.
+      {% endcomment %}
+      <button class="search__submit" type="submit" aria-label="Buscar" title="Buscar">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="m21 21-4.34-4.34" />
+          <circle cx="11" cy="11" r="8" />
+        </svg>
+      </button>
     </form>
     <div class="account">
       {% if request.user.is_authenticated %}
