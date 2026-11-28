@@ -72,17 +72,28 @@ Con PostgreSQL externo, omite `--profile postgres`. Si el despliegue usa otro ar
 
 ## Organizar miniaturas en S3
 
-Las miniaturas nuevas solo aceptan WebP y se guardan en `upload/Miniaturas/Premium/` o `upload/Miniaturas/NoPremium/`. Antes de migrar, confirma que `DB_HOST` y `DB_NAME` apuntan exclusivamente al catálogo de SoplaX y que `AWS_STORAGE_BUCKET_NAME` es su bucket de medios. No ejecutes este procedimiento contra la base de producción del SWA.
+Las miniaturas nuevas solo aceptan WebP y se guardan en `upload/Miniaturas/Premium/` o `upload/Miniaturas/NoPremium/`. La migración `0008_segmentar_miniaturas_premium` cambia la ruta de futuras cargas, pero no mueve archivos ni reescribe las claves que ya están guardadas. Para corregir referencias antiguas como `upload/photos/...`, el comando `convertir_miniaturas_webp --solo-legadas` crea las WebP segmentadas, actualiza las referencias de `Videos.miniatura` y retira las fuentes de S3 solo cuando ningún video las usa.
 
-Reconstruye la imagen, aplica la migración del campo Premium y genera el plan. Estos comandos consultan S3 para inspeccionar imágenes; `--dry-run` no escribe en la base ni en S3.
+Antes de migrar, confirma que `DB_HOST` y `DB_NAME` apuntan exclusivamente al catálogo de SoplaX y que `AWS_STORAGE_BUCKET_NAME` es su bucket de medios. No ejecutes este procedimiento contra la base de producción del SWA.
+
+Reconstruye la imagen, aplica las migraciones pendientes y genera el plan de solo lectura. Estos comandos consultan la base de datos y descargan los archivos desde S3 para inspeccionarlos; `--dry-run` no escribe en la base ni en S3.
 
 ```sh
 docker compose --env-file .env.production build web
 docker compose --env-file .env.production --profile postgres run --rm --no-deps web python manage.py migrate --noinput
-docker compose --env-file .env.production --profile postgres run --rm --no-deps web python manage.py convertir_miniaturas_webp --dry-run
+docker compose --env-file .env.production --profile postgres run --rm --no-deps web python manage.py convertir_miniaturas_webp --solo-legadas --dry-run
 ```
 
-El plan muestra cada ID, clave origen y destino exacto, tamaño, referencias compartidas y fuentes que retiraría. Convierte imágenes JPG/PNG antiguas, conserva WebP válidas, separa las referencias Premium y NoPremium y retira las claves anteriores solo cuando ya no están referenciadas. Comparte y revisa la salida del plan antes de aplicar cambios.
+El plan muestra cada ID, clave origen y destino exacto, tamaño, referencias compartidas y fuentes que retiraría. Convierte imágenes JPG/PNG antiguas, conserva WebP válidas y retira las claves `upload/photos/...` solo cuando ya no están referenciadas por un video o una miniatura. Comparte la salida completa del `--dry-run` para revisar las claves y los objetos que se retirarían antes de indicar la aplicación.
+
+Después de revisar y aprobar el plan para el catálogo correcto, aplica la reubicación y vuelve a simular para confirmar que no quedan referencias a la ruta heredada:
+
+```sh
+docker compose --env-file .env.production --profile postgres run --rm --no-deps web python manage.py convertir_miniaturas_webp --solo-legadas --aplicar
+docker compose --env-file .env.production --profile postgres run --rm --no-deps web python manage.py convertir_miniaturas_webp --solo-legadas --dry-run
+```
+
+La segunda simulación debe mostrar cero referencias por reubicar. Si PostgreSQL es externo, omite `--profile postgres`. No ejecutes `--aplicar` contra la base de producción del SWA.
 
 ## Espacios publicitarios de Play
 

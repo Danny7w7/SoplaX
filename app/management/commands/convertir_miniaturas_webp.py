@@ -12,6 +12,9 @@ from app.models import Videos, miniatura_directory
 from app.video_uploads import thumbnail_webp_content
 
 
+LEGACY_THUMBNAIL_DIRECTORY = "upload/photos"
+
+
 @dataclass(frozen=True)
 class Relocation:
     source: str
@@ -23,12 +26,23 @@ class Relocation:
     destination_exists: bool
 
 
-def prepare_relocations(storage, *, using):
+def prepare_relocations(storage, *, using, legacy_only=False):
     grouped = {}
     empty = 0
     expected = {}
+    videos = Videos.objects.using(using)
+    if legacy_only:
+        selected_videos = videos.filter(
+            Q(miniatura=LEGACY_THUMBNAIL_DIRECTORY)
+            | Q(miniatura__startswith=f"{LEGACY_THUMBNAIL_DIRECTORY}/")
+        )
+        outside_scope = videos.count() - selected_videos.count()
+    else:
+        selected_videos = videos
+        outside_scope = 0
+
     for video_id, premium, source in (
-        Videos.objects.using(using).order_by("pk").values_list("pk", "es_premium", "miniatura").iterator()
+        selected_videos.order_by("pk").values_list("pk", "es_premium", "miniatura").iterator()
     ):
         if not source:
             empty += 1
@@ -82,7 +96,7 @@ def prepare_relocations(storage, *, using):
         )
         for item in relocations
     ]
-    return relocations, empty, expected
+    return relocations, empty, expected, outside_scope
 
 
 def apply_relocations(storage, relocations, expected, *, using):
@@ -183,6 +197,11 @@ class Command(BaseCommand):
         mode = parser.add_mutually_exclusive_group()
         mode.add_argument("--dry-run", action="store_true", help="Muestra el plan sin escribir en S3 ni en la base.")
         mode.add_argument("--aplicar", action="store_true", help="Reubica miniaturas y actualiza sus referencias.")
+        parser.add_argument(
+            "--solo-legadas",
+            action="store_true",
+            help=f"Limita el proceso a miniaturas que aún usan {LEGACY_THUMBNAIL_DIRECTORY}/.",
+        )
 
     def handle(self, *args, **options):
         if not features.check("webp"):
@@ -191,8 +210,13 @@ class Command(BaseCommand):
         storage = Videos._meta.get_field("miniatura").storage
         using = router.db_for_write(Videos)
         apply = options["aplicar"]
+        legacy_only = options["solo_legadas"]
         try:
-            relocations, empty, expected = prepare_relocations(storage, using=using)
+            relocations, empty, expected, outside_scope = prepare_relocations(
+                storage,
+                using=using,
+                legacy_only=legacy_only,
+            )
             if apply:
                 changed = apply_relocations(storage, relocations, expected, using=using)
                 deleted, retained, failed = remove_unreferenced_sources(storage, relocations, using=using)
@@ -229,9 +253,16 @@ class Command(BaseCommand):
                 f"({item.original_size} → {len(item.content)} bytes; {status})."
             )
 
+        if legacy_only:
+            self.stdout.write(
+                f"Alcance limitado a {LEGACY_THUMBNAIL_DIRECTORY}/; "
+                f"{outside_scope} videos quedaron fuera del filtro."
+            )
+
         verb = "Aplicado" if apply else "Simulación"
         self.stdout.write(
-            f"{verb}: {len(changed)} referencias por reubicar, {empty} videos sin miniatura. "
+            f"{verb}: {len(changed)} referencias por reubicar, "
+            f"{empty} videos sin miniatura en el alcance. "
             f"Fuentes obsoletas: {len(deleted)} por retirar, {len(retained)} por conservar por referencia."
         )
         for source in deleted:

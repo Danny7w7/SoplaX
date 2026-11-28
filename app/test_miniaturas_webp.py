@@ -160,6 +160,55 @@ class ConvertirMiniaturasWebpTests(TestCase):
         self.assertEqual(self.database_snapshot(), expected_rows)
         self.assertEqual(self.storage_snapshot(), applied_files)
 
+    def test_solo_legadas_reubica_upload_photos_y_respeta_claves_actuales(self):
+        current_thumbnail = self.save_image(
+            "upload/Miniaturas/Premium/actual.webp", "WEBP", "RGB", (80, 45)
+        )
+        current_video = self.create_video("Miniatura actual", current_thumbnail)
+        original_rows = self.database_snapshot()
+        original_files = self.storage_snapshot()
+
+        def reject_writes(execute, sql, params, many, context):
+            self.assertTrue(sql.lstrip().upper().startswith("SELECT"), sql)
+            return execute(sql, params, many, context)
+
+        with (
+            connection.execute_wrapper(reject_writes),
+            patch.object(self.storage, "save", wraps=self.storage.save) as save,
+            patch.object(self.storage, "delete", wraps=self.storage.delete) as delete,
+        ):
+            output = self.run_command("--solo-legadas")
+            self.assertEqual(self.run_command("--solo-legadas", "--dry-run"), output)
+
+        self.assertIn("upload/photos/paisaje.JPG", output)
+        self.assertNotIn(current_thumbnail, output)
+        self.assertIn("videos quedaron fuera del filtro", output)
+        save.assert_not_called()
+        delete.assert_not_called()
+        self.assertEqual(self.database_snapshot(), original_rows)
+        self.assertEqual(self.storage_snapshot(), original_files)
+
+        self.run_command("--solo-legadas", "--aplicar")
+        for video in (self.landscape, self.shared, self.portrait, self.existing, current_video):
+            video.refresh_from_db()
+
+        self.assertTrue(self.landscape.miniatura.name.startswith("upload/Miniaturas/Premium/"))
+        self.assertTrue(self.shared.miniatura.name.startswith("upload/Miniaturas/NoPremium/"))
+        self.assertTrue(self.portrait.miniatura.name.startswith("upload/Miniaturas/Premium/"))
+        self.assertTrue(self.existing.miniatura.name.startswith("upload/Miniaturas/Premium/"))
+        self.assertEqual(current_video.miniatura.name, current_thumbnail)
+        applied_rows = self.database_snapshot()
+        applied_files = self.storage_snapshot()
+        self.assertIn(current_thumbnail, applied_files)
+        self.assertFalse(any(name.startswith("upload/photos/") for name in applied_files))
+
+        with patch.object(self.storage, "save", wraps=self.storage.save) as save:
+            output = self.run_command("--solo-legadas", "--aplicar")
+        self.assertIn("0 referencias por reubicar", output)
+        save.assert_not_called()
+        self.assertEqual(self.database_snapshot(), applied_rows)
+        self.assertEqual(self.storage_snapshot(), applied_files)
+
     def test_rechaza_una_imagen_danada_sin_cambiar_el_catalogo(self):
         bad_file = self.storage.save("upload/photos/danada.png", ContentFile(b"imagen invalida"))
         self.create_video("Miniatura dañada", bad_file)
