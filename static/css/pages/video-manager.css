@@ -280,8 +280,7 @@
     font-size: var(--text-xl);
   }
 
-  .video-manager__card textarea.input,
-  .video-manager__card select.input {
+  .video-manager__card textarea.input {
     padding: var(--space-2) var(--space-3);
   }
 
