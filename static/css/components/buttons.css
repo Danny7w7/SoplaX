@@ -50,6 +50,23 @@
     --button-border: transparent;
   }
 
+  .button--secondary {
+    --button-bg: var(--color-surface-raised);
+    --button-bg-hover: var(--color-border);
+    --button-border: var(--color-border);
+  }
+
+  .button--danger {
+    --button-bg: var(--color-danger-subtle);
+    --button-bg-hover: var(--color-danger);
+    --button-fg: var(--color-danger);
+    --button-border: var(--color-danger);
+  }
+
+  .button--danger:hover {
+    --button-fg: var(--color-background);
+  }
+
   .button--sm {
     min-height: var(--control-height-sm);
     padding-inline: var(--space-3);

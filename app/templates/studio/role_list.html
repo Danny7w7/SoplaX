@@ -1,0 +1,50 @@
+{% extends "studio/base.html" %}
+{% load studio %}
+
+{% block studio_title %}Roles y permisos{% endblock %}
+
+{% block studio_content %}
+<header class="studio-head">
+  <div class="studio-head__copy">
+    <p class="eyebrow">Acceso</p>
+    <h1 class="studio-head__title">Roles y permisos</h1>
+    <p class="studio-head__lead">Define qué puede ver, crear, editar o eliminar cada parte del equipo. Los superusuarios siempre tienen acceso completo.</p>
+  </div>
+  <div class="studio-head__actions">
+    <a class="button button--primary" href="{% url 'studio_role_add' %}">{% studio_icon "plus" %}Nuevo rol</a>
+  </div>
+</header>
+
+{% if roles %}
+<table class="studio-table">
+  <thead>
+    <tr>
+      <th scope="col">Rol</th>
+      <th scope="col" class="studio-table__num">Personas</th>
+      <th scope="col" class="studio-table__num">Permisos</th>
+      <th scope="col" class="studio-table__actions"><span class="visually-hidden">Acciones</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for role in roles %}
+    <tr>
+      <th scope="row" class="studio-table__primary">{{ role.name }}</th>
+      <td class="studio-table__num" data-label="Personas">{{ role.total_users|miles }}</td>
+      <td class="studio-table__num" data-label="Permisos">{{ role.total_permissions|miles }}</td>
+      <td class="studio-table__actions">
+        <a class="button button--ghost button--sm" href="{% url 'studio_role_edit' role.pk %}">{% studio_icon "edit" %}Editar</a>
+        <a class="button button--ghost button--sm studio-danger-link" href="{% url 'studio_role_delete' role.pk %}">{% studio_icon "trash" %}Eliminar</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+  <span class="x-glyph x-glyph--lg" aria-hidden="true"></span>
+  <h3 class="empty-state__title">Aún no hay roles</h3>
+  <p>Crea un rol, por ejemplo «Editor de contenido», y asígnalo a las personas del equipo.</p>
+  <a class="button button--primary" href="{% url 'studio_role_add' %}">Crear el primer rol</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.contrib.auth.views import LoginView, LogoutView, PasswordResetCompleteView
 from django.urls import path
 
-from app import video_sitemaps, views
+from app import studio, video_sitemaps, views
 from app.forms import EmailLoginForm
 
 
@@ -18,6 +18,19 @@ urlpatterns = [
         name="video_manager_thumbnail_download",
     ),
     path("admin/videos/<int:video_id>/eliminar/", views.video_manager_delete, name="video_manager_delete"),
+    path("admin/panel/", studio.dashboard, name="studio_dashboard"),
+    path("admin/catalogo/<slug:kind>/", studio.catalog_list, name="studio_catalog"),
+    path("admin/catalogo/<slug:kind>/nuevo/", studio.catalog_add, name="studio_catalog_add"),
+    path("admin/catalogo/<slug:kind>/<int:pk>/editar/", studio.catalog_edit, name="studio_catalog_edit"),
+    path("admin/catalogo/<slug:kind>/<int:pk>/eliminar/", studio.catalog_delete, name="studio_catalog_delete"),
+    path("admin/usuarios/", studio.user_list, name="studio_users"),
+    path("admin/usuarios/nuevo/", studio.user_add, name="studio_user_add"),
+    path("admin/usuarios/<int:pk>/editar/", studio.user_edit, name="studio_user_edit"),
+    path("admin/usuarios/<int:pk>/contrasena/", studio.user_password, name="studio_user_password"),
+    path("admin/roles/", studio.role_list, name="studio_roles"),
+    path("admin/roles/nuevo/", studio.role_form, name="studio_role_add"),
+    path("admin/roles/<int:pk>/editar/", studio.role_form, name="studio_role_edit"),
+    path("admin/roles/<int:pk>/eliminar/", studio.role_delete, name="studio_role_delete"),
     path("admin/", admin.site.urls),
     path("", views.index, name="home"),
     path("robots.txt", video_sitemaps.robots_txt, name="robots_txt"),

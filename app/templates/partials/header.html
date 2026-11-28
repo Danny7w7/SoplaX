@@ -26,13 +26,7 @@
         </div>
         <ul class="menu__list" role="list">
           {% if user.is_staff %}
-          {% if user.is_superuser or perms.app.view_videos or perms.app.change_videos %}
-          <li><a class="menu__item" href="{% url 'video_manager' %}">Panel de administración</a></li>
-          {% elif perms.app.add_videos %}
-          <li><a class="menu__item" href="{% url 'video_manager_add' %}">Panel de administración</a></li>
-          {% else %}
-          <li><a class="menu__item" href="{% url 'admin:index' %}">Panel de administración</a></li>
-          {% endif %}
+          <li><a class="menu__item" href="{% url 'studio_dashboard' %}">Panel de administración</a></li>
           {% endif %}
           <li>
             <form method="post" action="{% url 'logout' %}">

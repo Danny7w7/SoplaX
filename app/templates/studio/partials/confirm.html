@@ -1,0 +1,15 @@
+{% load studio %}
+{% comment %}
+  Confirmación de eliminación. Parámetros: eyebrow, title, message, back_url, keep_label, submit_label.
+{% endcomment %}
+<section class="studio-confirm" aria-labelledby="confirm-title">
+  <span class="studio-confirm__mark" aria-hidden="true">{% studio_icon "alert" %}</span>
+  <p class="eyebrow">{{ eyebrow|default:"Eliminación permanente" }}</p>
+  <h1 class="studio-confirm__title" id="confirm-title">{{ title }}</h1>
+  <p class="studio-confirm__text">{{ message }}</p>
+  <form method="post" class="studio-confirm__actions">
+    {% csrf_token %}
+    <a class="button button--secondary" href="{{ back_url }}">{{ keep_label|default:"Cancelar" }}</a>
+    <button class="button button--danger" type="submit">{{ submit_label|default:"Eliminar" }}</button>
+  </form>
+</section>
