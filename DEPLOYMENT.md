@@ -95,6 +95,28 @@ docker compose --env-file .env.production --profile postgres run --rm --no-deps 
 
 La segunda simulación debe mostrar cero referencias por reubicar. Si PostgreSQL es externo, omite `--profile postgres`. No ejecutes `--aplicar` contra la base de producción del SWA.
 
+### Publicar nombres legibles para las WebP del catálogo
+
+Transfiere el mapa privado `seeds/miniaturas_webp.json` por WinSCP a la misma ruta junto a `compose.yaml` en la VPS. Contiene la clave de cada video, sus referencias anteriores, la WebP con hash y el nombre nuevo. El mapa se mantiene fuera de Git.
+
+Verifica que `DB_HOST=postgres` y `DB_NAME` identifiquen el PostgreSQL de Compose de SoplaX y que el bucket configurado sea el de sus medios. Con el código actualizado en la VPS, reconstruye la imagen y simula el plan.
+
+```sh
+docker compose --env-file .env.production build web
+docker compose --env-file .env.production --profile postgres run --rm --no-deps \
+  -v "$PWD/seeds/miniaturas_webp.json:/run/soplax-miniaturas.json:ro" \
+  web python manage.py normalizar_rutas_miniaturas /run/soplax-miniaturas.json --dry-run
+```
+
+Comparte el resultado para revisar el plan antes de aplicar. El comando valida el contenido de las WebP, crea los nombres que faltan y actualiza las referencias del catálogo en una transacción. Las claves con hash quedan disponibles mientras se actualiza y verifica el catálogo local. Si una copia quedó publicada después de un fallo, el siguiente intento la reutiliza tras comprobar su contenido.
+
+Cuando estén publicados los nombres en S3, abre PowerShell desde el proyecto local con el perfil de desarrollo y S3 habilitado para usar las mismas claves.
+
+```powershell
+.\venv\Scripts\python.exe manage.py normalizar_rutas_miniaturas seeds/miniaturas_webp.json --dry-run
+.\venv\Scripts\python.exe manage.py normalizar_rutas_miniaturas seeds/miniaturas_webp.json --aplicar
+```
+
 ## Espacios publicitarios de Play
 
 Con `DJANGO_ENV=development` y `SOPLAX_PLAY_AD_PREVIEW=1`, Play muestra espacios de prueba sin solicitar creativos. En producción, cada variante se activa con `SOPLAX_PLAY_ADS`. La variable acepta un objeto JSON que contiene la posición, el dispositivo (`desktop` o `mobile`) y los campos `enabled`, `format` y `url`. Usa `enabled: true` y la URL HTTPS del iframe suministrado por el proveedor.
