@@ -1,36 +1,31 @@
-{% extends "base.html" %}
-{% load static %}
+{% extends "studio/base.html" %}
+{% load static studio %}
 
-{% block title %}Eliminar video · SoplaX{% endblock %}
-{% block styles %}<link rel="stylesheet" href="{% static 'css/pages/video-manager.css' %}">{% endblock %}
-{% block header %}{% include "partials/header_minimal.html" %}{% endblock %}
-{% block body_class %}page-video-manager{% endblock %}
-{% block age_gate %}{% endblock %}
+{% block studio_title %}Eliminar video{% endblock %}
+{% block studio_styles %}<link rel="stylesheet" href="{% static 'css/pages/video-manager.css' %}">{% endblock %}
 
-{% block content %}
-<div class="video-manager container video-manager--confirm-page">
-  {% if can_view_videos %}
-  <a class="back-link" href="{% url 'video_manager' %}"><span aria-hidden="true">←</span> Biblioteca de videos</a>
-  {% else %}
-  <a class="back-link" href="{% url 'admin:index' %}"><span aria-hidden="true">←</span> Administración</a>
+{% block studio_content %}
+{% if can_view_videos %}
+<a class="back-link" href="{% url 'video_manager' %}"><span aria-hidden="true">←</span> Videos</a>
+{% else %}
+<a class="back-link" href="{% url 'studio_dashboard' %}"><span aria-hidden="true">←</span> Resumen</a>
+{% endif %}
+<section class="studio-confirm" aria-labelledby="delete-title">
+  <span class="studio-confirm__mark" aria-hidden="true">{% studio_icon "alert" %}</span>
+  <p class="eyebrow">Eliminación permanente</p>
+  <h1 class="studio-confirm__title" id="delete-title">¿Eliminar este video?</h1>
+  <p class="studio-confirm__text">Se eliminará <strong>«{{ managed_video.nombre }}»</strong> del catálogo y sus archivos asociados de S3. Los archivos que también use otro video se conservarán.</p>
+  {% if managed_video.miniatura %}
+  <img class="studio-confirm__thumb" src="{{ managed_video.miniatura.url }}" alt="Miniatura de {{ managed_video.nombre }}">
   {% endif %}
-  <section class="video-manager__confirm" aria-labelledby="delete-title">
-    <span class="video-manager__confirm-mark" aria-hidden="true">!</span>
-    <p class="eyebrow">ELIMINACIÓN PERMANENTE</p>
-    <h1 id="delete-title">¿Eliminar este video?</h1>
-    <p>Se eliminará <strong>«{{ managed_video.nombre }}»</strong> del catálogo y sus archivos asociados de S3. Los archivos que también use otro video se conservarán.</p>
-    {% if managed_video.miniatura %}
-    <img class="video-manager__confirm-thumb" src="{{ managed_video.miniatura.url }}" alt="Miniatura de {{ managed_video.nombre }}">
+  <form method="post" class="studio-confirm__actions">
+    {% csrf_token %}
+    {% if can_view_videos %}
+    <a class="button button--secondary" href="{% url 'video_manager' %}">Conservar video</a>
+    {% else %}
+    <a class="button button--secondary" href="{% url 'studio_dashboard' %}">Conservar video</a>
     {% endif %}
-    <form method="post" class="video-manager__confirm-actions">
-      {% csrf_token %}
-      {% if can_view_videos %}
-      <a class="button button--secondary" href="{% url 'video_manager' %}">Conservar video</a>
-      {% else %}
-      <a class="button button--secondary" href="{% url 'admin:index' %}">Conservar video</a>
-      {% endif %}
-      <button class="button button--danger" type="submit">Eliminar definitivamente</button>
-    </form>
-  </section>
-</div>
+    <button class="button button--danger" type="submit">Eliminar definitivamente</button>
+  </form>
+</section>
 {% endblock %}

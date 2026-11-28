@@ -1,0 +1,32 @@
+{% extends "studio/base.html" %}
+{% load studio %}
+
+{% block studio_title %}{% if item %}Editar {{ item.nombre }}{% else %}Agregar {{ kind.plural|lower }}{% endif %}{% endblock %}
+
+{% block studio_content %}
+<header class="studio-head">
+  <div class="studio-head__copy">
+    <a class="back-link" href="{% url 'studio_catalog' kind.slug %}"><span aria-hidden="true">←</span> {{ kind.plural }}</a>
+    <h1 class="studio-head__title">{% if item %}Editar {{ kind.singular }}{% else %}Agregar {{ kind.plural|lower }}{% endif %}</h1>
+    <p class="studio-head__lead">
+      {% if item %}El nuevo nombre se mostrará en {{ total_videos|miles }} video{{ total_videos|pluralize }}.{% else %}Puedes agregar uno o varios a la vez.{% endif %}
+    </p>
+  </div>
+</header>
+
+<form class="studio-card studio-form form" method="post">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="form-alert" role="alert">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+  {% endif %}
+  {% if item %}
+    {% include "studio/partials/field.html" with field=form.nombre only %}
+  {% else %}
+    {% include "studio/partials/field.html" with field=form.nombres only %}
+  {% endif %}
+  <div class="studio-form__actions">
+    <a class="button button--ghost" href="{% url 'studio_catalog' kind.slug %}">Cancelar</a>
+    <button class="button button--primary" type="submit">{% if item %}Guardar cambios{% else %}Agregar{% endif %}</button>
+  </div>
+</form>
+{% endblock %}

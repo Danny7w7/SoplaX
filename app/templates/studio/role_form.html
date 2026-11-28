@@ -1,0 +1,61 @@
+{% extends "studio/base.html" %}
+
+{% block studio_title %}{% if role %}Editar rol{% else %}Nuevo rol{% endif %}{% endblock %}
+
+{% block studio_content %}
+<header class="studio-head">
+  <div class="studio-head__copy">
+    <a class="back-link" href="{% url 'studio_roles' %}"><span aria-hidden="true">←</span> Roles y permisos</a>
+    <h1 class="studio-head__title">{% if role %}{{ role.name }}{% else %}Nuevo rol{% endif %}</h1>
+    <p class="studio-head__lead">Las personas con este rol y acceso al panel podrán hacer lo que marques.</p>
+  </div>
+</header>
+
+<form class="studio-form form" method="post" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="form-alert" role="alert">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+  {% endif %}
+  <section class="studio-card">
+    {% include "studio/partials/field.html" with field=form.name only %}
+  </section>
+
+  <section class="studio-card" aria-labelledby="perms-title">
+    <h2 class="studio-card__title" id="perms-title">Permisos</h2>
+    {% if form.permisos.errors %}
+    <ul class="field__errors" role="list">{% for error in form.permisos.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+    {% endif %}
+    <table class="studio-matrix">
+      <thead>
+        <tr>
+          <th scope="col">Sección</th>
+          {% for action, label in actions %}<th scope="col">{{ label }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in matrix %}
+        <tr>
+          <th scope="row">{{ row.label }}</th>
+          {% for cell in row.cells %}
+          <td data-label="{{ cell.action }}">
+            {% if cell.perm %}
+            <label class="studio-matrix__cell">
+              <input type="checkbox" name="{{ form.permisos.html_name }}" value="{{ cell.perm.pk }}"{% if cell.checked %} checked{% endif %}>
+              <span class="visually-hidden">{{ cell.action }} {{ row.label|lower }}</span>
+            </label>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="field__help">«Editar» incluye ver. Para que alguien suba videos necesita además acceso al panel en su cuenta.</p>
+  </section>
+
+  <div class="studio-form__actions">
+    <a class="button button--ghost" href="{% url 'studio_roles' %}">Cancelar</a>
+    <button class="button button--primary" type="submit">{% if role %}Guardar cambios{% else %}Crear rol{% endif %}</button>
+  </div>
+</form>
+{% endblock %}

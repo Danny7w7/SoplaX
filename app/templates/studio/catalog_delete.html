@@ -1,0 +1,11 @@
+{% extends "studio/base.html" %}
+
+{% block studio_title %}Eliminar {{ item.nombre }}{% endblock %}
+
+{% block studio_content %}
+{% url 'studio_catalog' kind.slug as back_url %}
+<a class="back-link" href="{{ back_url }}"><span aria-hidden="true">←</span> {{ kind.plural }}</a>
+{% with title="¿Eliminar «"|add:item.nombre|add:"»?" %}
+{% include "studio/partials/confirm.html" with title=title message=effect back_url=back_url keep_label="Conservar" submit_label="Eliminar definitivamente" only %}
+{% endwith %}
+{% endblock %}

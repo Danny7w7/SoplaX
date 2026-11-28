@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static studio %}
+
+{% block title %}{% block studio_title %}Panel{% endblock %} · SoplaX Studio{% endblock %}
+{% block description %}Panel de administración de SoplaX.{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{% static 'css/pages/studio.css' %}">{% block studio_styles %}{% endblock %}{% endblock %}
+{% block body_class %}page-studio{% endblock %}
+{% block header %}{% include "studio/partials/topbar.html" %}{% endblock %}
+
+{% block content %}
+<div class="studio">
+  {% studio_nav %}
+  <div class="studio__main">
+    {% block studio_content %}{% endblock %}
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+{% block age_gate %}{% endblock %}
