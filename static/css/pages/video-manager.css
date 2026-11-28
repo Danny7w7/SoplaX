@@ -132,8 +132,7 @@
     gap: var(--space-5);
   }
 
-  .video-manager__form textarea.input,
-  .video-manager__form select.input {
+  .video-manager__form textarea.input {
     padding: var(--space-2) var(--space-3);
   }
 

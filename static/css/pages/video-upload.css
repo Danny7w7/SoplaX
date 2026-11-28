@@ -38,8 +38,7 @@
     font-size: var(--text-xl);
   }
 
-  .video-upload textarea.input,
-  .video-upload select.input {
+  .video-upload textarea.input {
     padding: var(--space-2) var(--space-3);
   }
 
