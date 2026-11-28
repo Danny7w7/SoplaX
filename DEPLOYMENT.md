@@ -117,30 +117,35 @@ Cuando estén publicados los nombres en S3, abre PowerShell desde el proyecto lo
 .\venv\Scripts\python.exe manage.py normalizar_rutas_miniaturas seeds/miniaturas_webp.json --aplicar
 ```
 
-## Espacios publicitarios de Play
+## Espacios publicitarios
 
-Con `DJANGO_ENV=development` y `SOPLAX_PLAY_AD_PREVIEW=1`, Play muestra espacios de prueba sin solicitar creativos. En producción, cada variante se activa con `SOPLAX_PLAY_ADS`. La variable acepta un objeto JSON que contiene la posición, el dispositivo (`desktop` o `mobile`) y los campos `enabled`, `format` y `url`. Usa `enabled: true` y la URL HTTPS del iframe suministrado por el proveedor.
+Las nueve zonas públicas de ExoClick están definidas en `project/ad_zones.py` y se usan por defecto. Para sustituir la configuración del catálogo o de Play, define `SOPLAX_HOME_ADS` o `SOPLAX_PLAY_ADS` con un objeto JSON por posición y dispositivo, con los campos `enabled`, `format` y `url`. Una variable con `{}` desactiva todos los anuncios de esa página.
 
-| Posición | Escritorio desde 70 rem | Móvil y tablet |
-| --- | --- | --- |
-| `PLAY_TOP_BANNER` | `970x90` o `728x90` | `320x50` o `320x100` |
-| `PLAY_SIDEBAR_AD_1`, `PLAY_SIDEBAR_AD_2`, `PLAY_SIDEBAR_AD_3` | `300x250` o `300x600` | `300x250` tras los videos 3, 8 y 11 de recomendados, respectivamente |
-| `PLAY_BOTTOM_AD_1` | `300x250` | `300x250` debajo de la información |
-| `PLAY_BOTTOM_AD_2`, `PLAY_BOTTOM_AD_3` | `300x250` | — |
-| `PLAY_RECOMMENDED_NATIVE` | `native`, 16:9 flexible tras el quinto video recomendado | `native`, 16:9 flexible tras el quinto video recomendado |
+| Clave | Dispositivo | Formato | Zone ID existente | Ubicación |
+| --- | --- | --- | --- | --- |
+| `HOME_TOP_BANNER` | `desktop` | `728x90` | `6112656` | Debajo del destacado y encima del catálogo |
+| `HOME_TOP_BANNER` | `mobile` | `300x250` | `6112658` | Debajo del destacado y encima del catálogo |
+| `HOME_FEED_AD` | `desktop` | `300x250` | `6112660` | Entre tarjetas del catálogo |
+| `HOME_FEED_AD` | `mobile` | `300x250` | `6112662` | Entre tarjetas del catálogo |
+| `PLAY_TOP_BANNER` | `desktop` | `728x90` o `970x90` | `6112582` | Debajo de la cabecera |
+| `PLAY_SIDEBAR_AD_1` | `desktop` | `300x500`, `300x250` o `300x600` | `6112600` | A la derecha del reproductor |
+| `PLAY_SIDEBAR_AD_1` | `mobile` | `300x250` | `6112606` | Entre videos recomendados |
+| `PLAY_BOTTOM_AD_1` | `desktop` | `300x250` | `6112602` | Debajo de los datos del video |
+| `PLAY_BOTTOM_AD_1` | `mobile` | `300x250` | `6112604` | Debajo de los datos del video |
 
-Para previsualizar la columna de dos anuncios de `300x600` y `300x250`, activa la vista de desarrollo y configura el primer lateral en `300x600` y el tercero con `enabled: false`.
+Usa `enabled: false` para desactivar una variante. El espacio native sigue pendiente de una zona propia.
 
-```dotenv
-SOPLAX_PLAY_AD_PREVIEW=1
-SOPLAX_PLAY_ADS='{"PLAY_SIDEBAR_AD_1":{"desktop":{"enabled":true,"format":"300x600"}},"PLAY_SIDEBAR_AD_3":{"desktop":{"enabled":false}}}'
-```
+Home muestra el banner superior y un banner entre tarjetas después del sexto video de cada página. Play muestra un superior, un lateral y un inferior en escritorio (desde 70 rem). En móvil muestra el inferior y un banner después del tercer recomendado. Se omite el banner entre tarjetas cuando la lista tiene menos elementos que el punto de inserción. La búsqueda interna omite la publicidad.
 
-En producción se reserva el espacio de cada variante activa con formato y URL válidos. El iframe se crea cuando su formato cabe en el dispositivo y se acepta el aviso de edad. El navegador difiere la carga de los anuncios que quedan fuera de la vista, salvo el banner superior. El creativo debe admitir un iframe con sandbox. La política de seguridad autoriza sus orígenes únicamente en Play.
+Cada iframe se crea al acercarse a la vista, una vez aceptado el aviso de edad y si hay espacio para sus dimensiones. El creativo debe admitir un iframe con sandbox. La política de seguridad autoriza los orígenes de las variantes seleccionadas para la página.
+
+Con `DJANGO_ENV=development` y `SOPLAX_PLAY_AD_PREVIEW=1`, Play muestra variantes de prueba. En el catálogo, las zonas con URL válida cargan su iframe y las zonas pendientes muestran vistas de prueba. Para validar la carga sin producir impresiones en ExoClick, configura URLs de prueba en un entorno local aislado.
 
 ## Indexación de páginas de video
 
 Las páginas públicas usan rutas como `/videos/titulo-del-video-5/`. Los enlaces anteriores y los títulos antiguos redirigen con `301` a la URL canónica. Los enlaces canónicos, el índice `/sitemap.xml` y su referencia en `/robots.txt` usan el origen de `DJANGO_PUBLIC_BASE_URL`.
+
+El catálogo sirve hasta 24 videos por página. La primera usa la canónica `/` y las siguientes `/?page=N`. Los resultados de búsqueda interna llevan `noindex`.
 
 Tras desplegar, abre `/robots.txt` y `/sitemap.xml` desde el dominio público. Envía el índice en Google Search Console e inspecciona una URL anterior y su destino canónico. El sitemap lista las páginas de reproducción y se actualiza con el catálogo.
 

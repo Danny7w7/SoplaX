@@ -1,6 +1,7 @@
 {% load soplax %}
 <article class="video-card">
-  <a class="video-card__link" href="{{ video.get_absolute_url }}">
+  <a class="video-card__link" href="{{ video.get_absolute_url }}" aria-labelledby="video-card-title-{{ video.pk }}"
+     {% if video.duracion_segundos %}aria-describedby="card-video-duration-{{ video.pk }}"{% endif %}>
     <div class="video-card__media{% if not video.miniatura %} video-card__media--placeholder{% endif %}"{% if video.miniatura %} data-skeleton{% endif %}>
       {% if video.miniatura %}
       <img class="video-card__thumb" alt="" width="640" height="360" decoding="async"
@@ -8,11 +9,12 @@
            src="{% if forloop.first and featured_thumbnail %}{{ featured_thumbnail }}{% else %}{{ video.miniatura.url }}{% endif %}">
       {% endif %}
       <span class="video-card__play" aria-hidden="true"><span class="icon-play"></span></span>
+      {% include "partials/video_duration.html" with video=video placement="card" only %}
     </div>
     {% if query %}
-    <h2 class="video-card__title">{{ video.nombre }}</h2>
+    <h2 class="video-card__title" id="video-card-title-{{ video.pk }}">{{ video.nombre }}</h2>
     {% else %}
-    <h3 class="video-card__title">{{ video.nombre }}</h3>
+    <h3 class="video-card__title" id="video-card-title-{{ video.pk }}">{{ video.nombre }}</h3>
     {% endif %}
   </a>
   <p class="video-card__meta">{{ video.visitas|vistas }}</p>

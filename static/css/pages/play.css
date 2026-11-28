@@ -1,10 +1,6 @@
 /* SoplaX — Reproducción y distribución de los espacios publicitarios. */
 @layer pages {
   .play-top-ad {
-    display: grid;
-    justify-items: center;
-    width: min(100%, var(--container-max));
-    margin-inline: auto;
     margin-block-start: var(--space-6);
   }
 
@@ -12,18 +8,29 @@
     display: grid;
     gap: var(--space-10);
     padding-block-start: var(--space-6);
+    container: watch-ad-area / inline-size;
   }
 
-  .play-layout {
-    display: grid;
-    align-items: start;
-    gap: var(--space-6);
+  .play-bottom-ads {
+    grid-column: 1 / -1;
   }
 
-  .play-sidebar {
-    display: grid;
-    justify-items: center;
-    gap: var(--space-4);
+  @container watch-ad-area (inline-size < 300px) {
+    .play-bottom-ads {
+      display: none;
+    }
+  }
+
+  @media (width >= 70rem) {
+    .play-page--sidebar {
+      grid-template-columns: minmax(0, 1fr) 300px;
+      align-items: start;
+      column-gap: var(--space-6);
+    }
+
+    .play-page--sidebar .play-recommended {
+      grid-column: 1 / -1;
+    }
   }
 
   .watch {
@@ -33,13 +40,29 @@
   }
 
   .player {
-    position: relative;
     width: 100%;
-    aspect-ratio: 16 / 9;
     overflow: hidden;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     background: var(--color-background);
+  }
+
+  .player__frame {
+    position: relative;
+    aspect-ratio: 16 / 9;
+  }
+
+  .player:fullscreen {
+    display: flex;
+    flex-direction: column;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .player:fullscreen .player__frame {
+    flex: 1;
+    min-height: 0;
+    aspect-ratio: auto;
   }
 
   .player__video {
@@ -49,6 +72,245 @@
     height: 100%;
     object-fit: contain;
     background: var(--color-background);
+  }
+
+  .player__video:not([controls]) {
+    cursor: pointer;
+  }
+
+  .player__controls {
+    position: relative;
+    padding: 0 var(--space-2) var(--space-1);
+    background: var(--color-surface);
+  }
+
+  .player__timeline {
+    position: relative;
+  }
+
+  .player__seek {
+    --seek-track: linear-gradient(to right, var(--color-accent) var(--seek-progress, 0%), var(--color-border-strong) 0);
+    appearance: none;
+    display: block;
+    width: 100%;
+    min-height: var(--control-height-sm);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    cursor: pointer;
+    touch-action: pan-y pinch-zoom;
+  }
+
+  .player__seek:disabled {
+    cursor: default;
+  }
+
+  .player__seek:focus-visible {
+    outline-offset: calc(-1 * var(--focus-offset));
+  }
+
+  .player__seek::-webkit-slider-runnable-track {
+    height: var(--space-1);
+    border-radius: var(--radius-sm);
+    background: var(--seek-track);
+  }
+
+  .player__seek::-moz-range-track {
+    height: var(--space-1);
+    border-radius: var(--radius-sm);
+    background: var(--seek-track);
+  }
+
+  .player__seek::-webkit-slider-thumb {
+    appearance: none;
+    width: var(--space-3);
+    height: var(--space-3);
+    margin-block-start: calc(-1 * var(--space-1));
+    border: 0;
+    border-radius: 50%;
+    background: var(--color-accent);
+  }
+
+  .player__seek::-moz-range-thumb {
+    width: var(--space-3);
+    height: var(--space-3);
+    border: 0;
+    border-radius: 50%;
+    background: var(--color-accent);
+  }
+
+  .player__preview {
+    --preview-width: min(100%, 4.5rem);
+    position: absolute;
+    inset-block-end: 100%;
+    left: clamp(calc(var(--preview-width) / 2), var(--preview-position, 50%), calc(100% - var(--preview-width) / 2));
+    z-index: 1;
+    display: grid;
+    justify-items: center;
+    gap: var(--space-1);
+    width: var(--preview-width);
+    padding: var(--space-1);
+    transform: translateX(-50%);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+
+  .player__preview.has-frame {
+    --preview-width: min(100%, 10rem);
+  }
+
+  .player__preview-video {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+    background: var(--color-background);
+  }
+
+  .player__preview:not(.has-frame) .player__preview-video {
+    position: absolute;
+    opacity: 0;
+  }
+
+  .player__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .player__button,
+  .player__rate {
+    --player-button-background: var(--color-surface);
+    min-height: var(--control-height-sm);
+    border-radius: var(--radius-sm);
+    background: var(--player-button-background);
+    color: var(--color-text);
+  }
+
+  .player__button:hover,
+  .player__rate:hover {
+    --player-button-background: var(--color-surface-raised);
+  }
+
+  .player__button {
+    display: grid;
+    flex: 0 0 var(--control-height-sm);
+    place-items: center;
+    padding: 0;
+    border: 0;
+    line-height: 1;
+  }
+
+  .player__time {
+    margin-inline-end: auto;
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .player__volume {
+    width: clamp(var(--space-10), 8vw, var(--space-20));
+    min-height: var(--control-height-sm);
+    accent-color: var(--color-accent);
+    cursor: pointer;
+  }
+
+  .player__rate {
+    padding-inline: var(--space-1);
+    border: 1px solid var(--color-border-strong);
+    font-size: var(--text-xs);
+    cursor: pointer;
+  }
+
+  .player__pause-icon {
+    width: var(--space-3);
+    height: var(--space-4);
+    border-inline: 3px solid currentColor;
+  }
+
+  .player__sound-icon {
+    position: relative;
+    width: var(--space-5);
+    height: var(--space-4);
+  }
+
+  .player__sound-icon::before,
+  .player__sound-icon::after,
+  .player__pip-icon::after,
+  .player__fullscreen-icon::before,
+  .player__fullscreen-icon::after {
+    position: absolute;
+    content: "";
+  }
+
+  .player__sound-icon::before {
+    inset: 0 auto 0 0;
+    width: var(--space-3);
+    background: currentColor;
+    clip-path: polygon(0 32%, 38% 32%, 100% 0, 100% 100%, 38% 68%, 0 68%);
+  }
+
+  .player__sound-icon::after {
+    inset: 2px 0 2px auto;
+    width: var(--space-2);
+    border-inline-end: 2px solid currentColor;
+    border-radius: 50%;
+  }
+
+  [data-player-mute][data-muted="true"] .player__sound-icon::after {
+    inset-block: calc(50% - 1px) auto;
+    height: 2px;
+    transform: rotate(-45deg);
+    border: 0;
+    border-radius: 0;
+    background: currentColor;
+  }
+
+  .player__pip-icon,
+  .player__fullscreen-icon {
+    position: relative;
+    border: 2px solid currentColor;
+  }
+
+  .player__pip-icon {
+    width: var(--space-5);
+    height: var(--space-3);
+  }
+
+  .player__pip-icon::after {
+    inset: auto 1px 1px auto;
+    width: 50%;
+    height: 50%;
+    background: currentColor;
+  }
+
+  .player__fullscreen-icon {
+    width: var(--space-4);
+    height: var(--space-4);
+  }
+
+  .player__fullscreen-icon::before {
+    inset: -2px 25%;
+    background: var(--player-button-background);
+  }
+
+  .player__fullscreen-icon::after {
+    inset: 25% -2px;
+    background: var(--player-button-background);
+  }
+
+  @media (max-width: 28rem) and (hover: none) {
+    .player__volume {
+      display: none;
+    }
   }
 
   .watch__header {
@@ -140,41 +402,5 @@
 
   .tag-group dd {
     margin: 0;
-  }
-
-  .play-bottom-ads {
-    display: grid;
-    justify-items: center;
-    gap: var(--space-5);
-  }
-
-  .play-bottom-ads--desktop {
-    grid-template-columns: repeat(auto-fit, 300px);
-    justify-content: center;
-  }
-
-  .play-recommended__ad {
-    display: grid;
-    min-width: 0;
-    justify-items: center;
-    align-content: start;
-  }
-
-  .play-recommended__ad--rectangle {
-    grid-column: 1 / -1;
-  }
-
-  /* Un rectángulo de 300 px cabe en un móvil estrecho al usar también los márgenes del catálogo. */
-  @media (max-width: 22rem) {
-    .play-bottom-ads.ad-device--mobile,
-    .play-recommended__ad--rectangle {
-      margin-inline: calc(-1 * var(--gutter));
-    }
-  }
-
-  @media (min-width: 70rem) {
-    .play-layout--sidebar {
-      grid-template-columns: minmax(0, 1fr) clamp(300px, 26%, 336px);
-    }
   }
 }

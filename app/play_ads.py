@@ -12,8 +12,6 @@ class Placement:
     position: str
     device: str
     formats: tuple[str, ...]
-    after_card: int | None = None
-    preview_default: bool = True
 
 
 @dataclass(frozen=True)
@@ -21,49 +19,49 @@ class AdSlot:
     position: str
     device: str
     format: str
-    after_card: int | None
     url: str = ""
     origin: str = ""
 
     @property
-    def eager(self):
-        return self.position == "PLAY_TOP_BANNER"
+    def width(self):
+        return int(self.format.partition("x")[0])
 
     @property
-    def width(self):
-        return self.format.split("x")[0] if self.format != "native" else ""
+    def height(self):
+        return int(self.format.partition("x")[2])
 
 
 @dataclass(frozen=True)
-class PlayAdLayout:
-    top_desktop: AdSlot | None
-    top_mobile: AdSlot | None
-    sidebar: tuple[AdSlot, ...]
-    bottom_desktop: tuple[AdSlot, ...]
-    bottom_mobile: AdSlot | None
-    feed: tuple[AdSlot, ...]
+class AdLayout:
+    top_slots: tuple[AdSlot, ...] = ()
+    feed_after: int | None = None
+    feed_slots: tuple[AdSlot, ...] = ()
+    watch_banner: AdSlot | None = None
+    watch_sidebar: AdSlot | None = None
+    bottom_slots: tuple[AdSlot, ...] = ()
 
     @property
     def origins(self):
-        slots = (self.top_desktop, self.top_mobile, self.bottom_mobile, *self.sidebar, *self.bottom_desktop, *self.feed)
-        return sorted({slot.origin for slot in slots if slot and slot.origin})
+        slots = (*self.top_slots, *self.feed_slots, self.watch_banner, self.watch_sidebar, *self.bottom_slots)
+        return tuple(sorted({slot.origin for slot in slots if slot and slot.origin}))
 
 
 RECTANGLE = ("300x250",)
-TOP_DESKTOP = Placement("PLAY_TOP_BANNER", "desktop", ("970x90", "728x90"))
-TOP_MOBILE = Placement("PLAY_TOP_BANNER", "mobile", ("320x50", "320x100"))
-SIDEBAR = tuple(
-    Placement(f"PLAY_SIDEBAR_AD_{index}", "desktop", ("300x250", "300x600"))
-    for index in range(1, 4)
+HOME_TOP = (
+    Placement("HOME_TOP_BANNER", "desktop", ("728x90",)),
+    Placement("HOME_TOP_BANNER", "mobile", RECTANGLE),
 )
-BOTTOM = tuple(Placement(f"PLAY_BOTTOM_AD_{index}", "desktop", RECTANGLE) for index in range(1, 4))
-BOTTOM_MOBILE = Placement("PLAY_BOTTOM_AD_1", "mobile", RECTANGLE)
-FEED = (
-    Placement("PLAY_SIDEBAR_AD_1", "mobile", RECTANGLE, after_card=3),
-    Placement("PLAY_RECOMMENDED_NATIVE", "desktop", ("native",), after_card=5),
-    Placement("PLAY_RECOMMENDED_NATIVE", "mobile", ("native",), after_card=5),
-    Placement("PLAY_SIDEBAR_AD_2", "mobile", RECTANGLE, after_card=8, preview_default=False),
-    Placement("PLAY_SIDEBAR_AD_3", "mobile", RECTANGLE, after_card=11, preview_default=False),
+HOME_FEED = (
+    Placement("HOME_FEED_AD", "desktop", RECTANGLE),
+    Placement("HOME_FEED_AD", "mobile", RECTANGLE),
+)
+# These configuration keys keep the existing ExoClick zones when moving them.
+WATCH_BANNER = Placement("PLAY_TOP_BANNER", "desktop", ("728x90", "970x90"))
+WATCH_SIDEBAR = Placement("PLAY_SIDEBAR_AD_1", "desktop", ("300x500", "300x250", "300x600"))
+PLAY_FEED = (Placement("PLAY_SIDEBAR_AD_1", "mobile", RECTANGLE),)
+PLAY_BOTTOM = (
+    Placement("PLAY_BOTTOM_AD_1", "desktop", RECTANGLE),
+    Placement("PLAY_BOTTOM_AD_1", "mobile", RECTANGLE),
 )
 
 HTTPS_URL = URLValidator(schemes=["https"])
@@ -99,15 +97,25 @@ def embed_origin(url):
     return f"https://{host}:{port}" if port and port != 443 else f"https://{host}"
 
 
-def get_play_ad_layout():
-    configuration = settings.PLAY_ADS
+def _build_layout(
+    configuration,
+    video_count,
+    feed,
+    *,
+    feed_after,
+    top=(),
+    watch_banner=None,
+    watch_sidebar=None,
+    bottom=(),
+    allow_live_preview=False,
+):
     preview = settings.DEVELOPMENT and settings.DEBUG and settings.PLAY_AD_PREVIEW
 
     def get_slot(placement):
         variants = configuration.get(placement.position, {})
         variant = variants.get(placement.device) if isinstance(variants, dict) else None
-        if preview and variant is None and placement.preview_default:
-            variant = {"enabled": True, "format": placement.formats[0]}
+        if preview and variant is None:
+            return AdSlot(placement.position, placement.device, placement.formats[0])
         if not isinstance(variant, dict) or variant.get("enabled") is not True:
             return None
 
@@ -115,24 +123,40 @@ def get_play_ad_layout():
         if ad_format not in placement.formats:
             return None
 
-        url = ""
-        origin = ""
-        if not preview:
-            url = variant.get("url")
-            origin = embed_origin(url)
-            if not origin:
-                return None
+        url = "" if preview and not allow_live_preview else variant.get("url")
+        origin = embed_origin(url)
+        if origin:
+            return AdSlot(placement.position, placement.device, ad_format, url, origin)
+        if preview:
+            return AdSlot(placement.position, placement.device, ad_format)
+        return None
 
-        return AdSlot(placement.position, placement.device, ad_format, placement.after_card, url, origin)
+    feed_slots = ()
+    if video_count >= feed_after:
+        feed_slots = tuple(slot for placement in feed if (slot := get_slot(placement)))
+    return AdLayout(
+        top_slots=tuple(slot for placement in top if (slot := get_slot(placement))),
+        feed_after=feed_after if feed_slots else None,
+        feed_slots=feed_slots,
+        watch_banner=get_slot(watch_banner) if watch_banner else None,
+        watch_sidebar=get_slot(watch_sidebar) if watch_sidebar else None,
+        bottom_slots=tuple(slot for placement in bottom if (slot := get_slot(placement))),
+    )
 
-    def get_slots(placements):
-        return tuple(slot for placement in placements if (slot := get_slot(placement)))
 
-    return PlayAdLayout(
-        top_desktop=get_slot(TOP_DESKTOP),
-        top_mobile=get_slot(TOP_MOBILE),
-        sidebar=get_slots(SIDEBAR),
-        bottom_desktop=get_slots(BOTTOM),
-        bottom_mobile=get_slot(BOTTOM_MOBILE),
-        feed=get_slots(FEED),
+def get_home_ad_layout(video_count):
+    if not video_count:
+        return AdLayout()
+    return _build_layout(settings.HOME_ADS, video_count, HOME_FEED, feed_after=6, top=HOME_TOP, allow_live_preview=True)
+
+
+def get_play_ad_layout(recommendation_count):
+    return _build_layout(
+        settings.PLAY_ADS,
+        recommendation_count,
+        PLAY_FEED,
+        feed_after=3,
+        watch_banner=WATCH_BANNER,
+        watch_sidebar=WATCH_SIDEBAR,
+        bottom=PLAY_BOTTOM,
     )

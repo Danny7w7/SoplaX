@@ -2,30 +2,35 @@
 
 (() => {
   const creatives = document.querySelectorAll("[data-ad-url]");
-  if (!creatives.length) {
+  if (!creatives.length || !("IntersectionObserver" in window)) {
     return;
   }
 
   const start = () => {
-    const observer = new ResizeObserver((entries) => {
-      for (const { target, contentRect } of entries) {
-        const minimumWidth = Number(target.dataset.adWidth);
-        if (!contentRect.width || !contentRect.height || contentRect.width < minimumWidth) {
+    const observer = new IntersectionObserver((entries) => {
+      for (const { target, isIntersecting } of entries) {
+        if (!isIntersecting || target.querySelector(".ad-slot__frame")) {
           continue;
         }
 
-        // El slot reserva su tamaño antes de cargar y los ocultos no tienen dimensiones.
+        const { width, height } = target.getBoundingClientRect();
+        const { adWidth, adHeight, adUrl } = target.dataset;
+        if (width < Number(adWidth) || height < Number(adHeight)) {
+          continue;
+        }
+
         observer.unobserve(target);
         const frame = document.createElement("iframe");
         frame.className = "ad-slot__frame";
         frame.title = "Publicidad";
+        frame.width = adWidth;
+        frame.height = adHeight;
         frame.referrerPolicy = "no-referrer";
         frame.sandbox.add("allow-scripts", "allow-popups");
-        frame.loading = target.hasAttribute("data-ad-eager") ? "eager" : "lazy";
-        frame.src = target.dataset.adUrl;
+        frame.src = adUrl;
         target.append(frame);
       }
-    });
+    }, { rootMargin: "200px 0px" });
     creatives.forEach((creative) => observer.observe(creative));
   };
 

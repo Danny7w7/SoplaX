@@ -1,0 +1,5 @@
+<li class="ad-grid-item">
+  {% for slot in slots %}
+    {% include "partials/ad_slot.html" with slot=slot only %}
+  {% endfor %}
+</li>

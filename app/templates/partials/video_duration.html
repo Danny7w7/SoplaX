@@ -1,0 +1,4 @@
+{% load soplax %}
+{% if video.duracion_segundos %}
+<time class="video-duration" id="{{ placement }}-video-duration-{{ video.pk }}" datetime="PT{{ video.duracion_segundos|stringformat:'d' }}S"><span class="visually-hidden">Duración </span>{{ video.duracion_segundos|duracion_video }}</time>
+{% endif %}

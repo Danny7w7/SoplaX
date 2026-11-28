@@ -1,4 +1,18 @@
 @layer components {
+  .video-grid:has(> .ad-grid-item) {
+    container: video-ad-grid / inline-size;
+  }
+
+  .ad-grid-item {
+    display: none;
+  }
+
+  @container video-ad-grid (inline-size >= 300px) {
+    .ad-grid-item {
+      display: block;
+    }
+  }
+
   .ad-slot {
     display: grid;
     min-inline-size: 0;
@@ -14,12 +28,15 @@
     text-align: center;
   }
 
+  .ad-grid-item .ad-slot__label {
+    text-align: start;
+  }
+
   .ad-slot__creative {
     position: relative;
     inline-size: 100%;
     block-size: var(--ad-height, auto);
-    aspect-ratio: var(--ad-ratio, auto);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     background: var(--color-surface);
   }
 
@@ -49,41 +66,42 @@
     --ad-height: 90px;
   }
 
-  .ad-slot--320x50 {
-    --ad-width: 320px;
-    --ad-height: 50px;
-  }
-
-  .ad-slot--320x100 {
-    --ad-width: 320px;
-    --ad-height: 100px;
-  }
-
   .ad-slot--300x250 {
     --ad-width: 300px;
     --ad-height: 250px;
+  }
+
+  .ad-slot--300x500 {
+    --ad-width: 300px;
+    --ad-height: 500px;
   }
 
   .ad-slot--300x600 {
     --ad-width: 300px;
     --ad-height: 600px;
   }
-
-  .ad-slot--native {
-    --ad-ratio: 16 / 9;
-  }
 }
 
 @layer utilities {
   @media (width < 70rem) {
-    .ad-device--desktop {
+    .ad-device--desktop,
+    .ad-grid-item:not(:has(> .ad-device--mobile)) {
       display: none;
+    }
+
+    .video-grid:has(> .ad-grid-item > .ad-device--mobile) {
+      --video-card-min-width: 300px;
     }
   }
 
   @media (width >= 70rem) {
-    .ad-device--mobile {
+    .ad-device--mobile,
+    .ad-grid-item:not(:has(> .ad-device--desktop)) {
       display: none;
+    }
+
+    .video-grid:has(> .ad-grid-item > .ad-device--desktop) {
+      --video-card-min-width: 300px;
     }
   }
 }

@@ -18,3 +18,13 @@ def vistas(value):
         number, suffix = round(count / 1_000_000, 1), "M"
     text = f"{number:.1f}".removesuffix(".0").replace(".", ",")
     return f"{text} {suffix} vistas"
+
+
+@register.filter
+def duracion_video(value):
+    """Formatea los segundos guardados de un video como M:SS o H:MM:SS."""
+    minutes, seconds = divmod(value, 60)
+    hours, minutes = divmod(minutes, 60)
+    if hours:
+        return f"{hours}:{minutes:02d}:{seconds:02d}"
+    return f"{minutes}:{seconds:02d}"

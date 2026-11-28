@@ -4,9 +4,11 @@ from contextlib import contextmanager
 from uuid import uuid4
 
 from django import forms
+from django.core.files.uploadedfile import UploadedFile
 from PIL import Image, ImageOps
 
 from .models import Videos
+from .video_durations import VideoDurationError, read_uploaded_video_duration
 
 
 logger = logging.getLogger(__name__)
@@ -29,7 +31,29 @@ def upload_widget(accept, limit_mib):
     )
 
 
-class VideoUploadForm(forms.ModelForm):
+class VideoFileForm(forms.ModelForm):
+    class Meta:
+        model = Videos
+        fields = "__all__"
+
+    def clean_video(self):
+        video = self.cleaned_data["video"]
+        if isinstance(video, UploadedFile):
+            video = validate_video_upload(video)
+            try:
+                self.instance.duracion_segundos = read_uploaded_video_duration(video)
+            except VideoDurationError as error:
+                raise forms.ValidationError(str(error), code="video_duration") from error
+        return video
+
+    def video_update_fields(self):
+        fields = {field.name for field in Videos._meta.concrete_fields if field.name in self.changed_data}
+        if "video" in fields:
+            fields.add("duracion_segundos")
+        return fields
+
+
+class VideoUploadForm(VideoFileForm):
     video = forms.FileField(
         label="Archivo de video",
         help_text=f"MP4 · hasta {VIDEO_LIMIT_MIB} MiB",
@@ -67,9 +91,6 @@ class VideoUploadForm(forms.ModelForm):
             "posturas": forms.SelectMultiple(attrs={"class": "input", "size": 4}),
         }
 
-    def clean_video(self):
-        return validate_video_upload(self.cleaned_data["video"])
-
     def clean_miniatura(self):
         return validate_thumbnail_upload(self.cleaned_data["miniatura"])
 
@@ -89,10 +110,6 @@ class VideoManagementForm(VideoUploadForm):
         help_text=f"WebP · hasta {THUMBNAIL_LIMIT_MIB} MiB · Déjala vacía para conservar la actual.",
         widget=upload_widget("image/webp,.webp", THUMBNAIL_LIMIT_MIB),
     )
-
-    def clean_video(self):
-        upload = self.files.get(self.add_prefix("video"))
-        return validate_video_upload(upload) if upload else self.instance.video
 
     def clean_miniatura(self):
         upload = self.files.get(self.add_prefix("miniatura"))

@@ -18,7 +18,7 @@
 
   .video-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--video-card-min-width, 16rem)), 1fr));
     gap: var(--space-8) var(--space-5);
   }
 
@@ -123,6 +123,22 @@
     .video-card__link:focus-visible .video-card__thumb {
       transform: scale(1.04);
     }
+  }
+
+  .video-duration {
+    position: absolute;
+    inset-inline-end: var(--space-2);
+    inset-block-end: var(--space-2);
+    z-index: 1;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--color-scrim);
+    color: var(--color-text);
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-semibold);
+    font-variant-numeric: tabular-nums;
+    line-height: var(--leading-tight);
+    white-space: nowrap;
   }
 
   .video-card__title {

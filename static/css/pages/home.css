@@ -122,6 +122,17 @@
   }
 
   /* Catálogo */
+  .home-top-ads {
+    margin-block-start: var(--space-6);
+    container: home-ad-area / inline-size;
+  }
+
+  @container home-ad-area (inline-size < 300px) {
+    .home-top-ads .ad-slot {
+      display: none;
+    }
+  }
+
   .catalog {
     padding-block-start: var(--space-10);
   }

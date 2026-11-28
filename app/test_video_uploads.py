@@ -14,6 +14,8 @@ from django.urls import reverse
 from PIL import Image
 
 from .models import Actor, Categoria, Idioma, Postura, Usuario, Videos
+from .video_durations import VideoDurationError
+from .video_uploads import VideoManagementForm
 
 
 MP4_HEADER = b"\x00\x00\x00\x18ftypisom\x00\x00\x02\x00isommp42"
@@ -41,6 +43,9 @@ class VideoUploadTests(TestCase):
         ))
         self.storage = storages["default"]
         self.upload_url = reverse("admin:app_videos_add")
+        self.probe_duration = self.enterContext(patch(
+            "app.video_uploads.read_uploaded_video_duration", return_value=487,
+        ))
 
     def upload_data(self, **overrides):
         with BytesIO() as thumbnail, Image.new("RGB", (64, 36), "purple") as image:
@@ -107,6 +112,7 @@ class VideoUploadTests(TestCase):
         self.assertEqual(video.descripcion, "Descripción para el catálogo")
         self.assertTrue(video.es_premium)
         self.assertEqual(video.visitas, 0)
+        self.assertEqual(video.duracion_segundos, 487)
         self.assertEqual(video.idioma, language)
         self.assertCountEqual(video.categorias.all(), [category])
         self.assertCountEqual(video.actores.all(), [actor])
@@ -134,6 +140,73 @@ class VideoUploadTests(TestCase):
         self.assertFalse(video.es_premium)
         self.assertRegex(video.miniatura.name, r"^upload/Miniaturas/NoPremium/[0-9a-f]{32}\.webp$")
 
+    def test_video_manager_stores_the_duration_on_upload(self):
+        self.client.force_login(self.publisher)
+        response = self.client.post(reverse("video_manager_add"), self.upload_data())
+
+        self.assertRedirects(response, reverse("video_manager"))
+        self.assertEqual(Videos.objects.get().duracion_segundos, 487)
+
+    def test_replacing_a_video_updates_its_duration_in_both_editors(self):
+        self.client.force_login(self.publisher)
+        self.probe_duration.return_value = 3725
+        for route, redirect in (
+            ("video_manager_edit", "video_manager"),
+            ("admin:app_videos_change", "admin:app_videos_changelist"),
+        ):
+            with self.subTest(route=route):
+                old_file = self.storage.save("upload/videos/old.mp4", ContentFile(MP4_HEADER))
+                video = Videos.objects.create(
+                    nombre="Video existente",
+                    descripcion="Descripción del video",
+                    miniatura="upload/Miniaturas/Premium/test.webp",
+                    video=old_file,
+                    duracion_segundos=487,
+                    visitas=0,
+                )
+                response = self.client.post(reverse(route, args=[video.pk]), {
+                    "nombre": video.nombre,
+                    "descripcion": video.descripcion,
+                    "es_premium": "on",
+                    "video": SimpleUploadedFile("replacement.mp4", MP4_HEADER, content_type="video/mp4"),
+                    "visitas": video.visitas,
+                    "_save": "Guardar",
+                })
+
+                self.assertRedirects(response, reverse(redirect))
+                video.refresh_from_db()
+                self.assertNotEqual(video.video.name, old_file)
+                self.assertEqual(video.duracion_segundos, 3725)
+                self.assertTrue(self.storage.exists(video.video.name))
+
+    def test_metadata_edit_preserves_duration_backfilled_during_the_edit(self):
+        self.client.force_login(self.publisher)
+        video = Videos.objects.create(
+            nombre="Video heredado",
+            descripcion="Descripción antigua",
+            miniatura="upload/Miniaturas/Premium/test.webp",
+            video="upload/videos/video.mp4",
+            visitas=0,
+        )
+        original_clean = VideoManagementForm.clean
+
+        def clean_with_backfill(form):
+            Videos.objects.filter(pk=video.pk).update(duracion_segundos=487)
+            return original_clean(form)
+
+        with patch.object(VideoManagementForm, "clean", clean_with_backfill):
+            response = self.client.post(reverse("video_manager_edit", args=[video.pk]), {
+                "nombre": video.nombre,
+                "descripcion": "Descripción nueva",
+                "es_premium": "on",
+            })
+
+        self.assertRedirects(response, reverse("video_manager"))
+        video.refresh_from_db()
+        self.assertEqual(video.descripcion, "Descripción nueva")
+        self.assertEqual(video.duracion_segundos, 487)
+        self.probe_duration.assert_not_called()
+
     def test_changing_tier_converts_and_moves_legacy_thumbnail(self):
         self.client.force_login(self.publisher)
         with BytesIO() as thumbnail, Image.new("RGB", (72, 40), "purple") as image:
@@ -144,6 +217,7 @@ class VideoUploadTests(TestCase):
             descripcion="Miniatura antigua",
             miniatura=old_thumbnail,
             video="upload/videos/video.mp4",
+            duracion_segundos=487,
             visitas=0,
         )
 
@@ -160,6 +234,7 @@ class VideoUploadTests(TestCase):
         self.assertRedirects(response, reverse("video_manager"))
         video.refresh_from_db()
         self.assertFalse(video.es_premium)
+        self.assertEqual(video.duracion_segundos, 487)
         self.assertRegex(video.miniatura.name, r"^upload/Miniaturas/NoPremium/[0-9a-f]{32}\.webp$")
         self.assertFalse(self.storage.exists(old_thumbnail))
         with video.miniatura.open("rb") as uploaded, Image.open(uploaded) as image:
@@ -176,6 +251,17 @@ class VideoUploadTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertCountEqual(response.context["form"].errors, ["video", "miniatura"])
+        self.assert_no_publication()
+        self.assertEqual(self.saved_files(), [])
+
+    def test_unreadable_duration_is_reported_before_upload_writes(self):
+        self.client.force_login(self.publisher)
+        self.probe_duration.side_effect = VideoDurationError("No se pudo leer la duración del MP4.")
+
+        response = self.client.post(self.upload_url, self.upload_data())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("video", response.context["form"].errors)
         self.assert_no_publication()
         self.assertEqual(self.saved_files(), [])
 

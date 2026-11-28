@@ -15,7 +15,7 @@ ENV PATH="/opt/soplax/bin:$PATH" \
 
 WORKDIR /app
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates \
+    && apt-get install -y --no-install-recommends ca-certificates ffmpeg \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system --gid 10001 soplax \
     && useradd --system --uid 10001 --gid soplax --no-create-home soplax \

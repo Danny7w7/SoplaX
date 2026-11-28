@@ -8,6 +8,8 @@ from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.validators import URLValidator
 from dotenv import load_dotenv
 
+from .ad_zones import DEFAULT_HOME_ADS, DEFAULT_PLAY_ADS
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 env_file = ".env.production" if os.getenv("DJANGO_ENV") == "production" else ".env"
@@ -35,11 +37,17 @@ DEBUG = DEVELOPMENT
 
 PLAY_AD_PREVIEW = DEVELOPMENT and os.getenv("SOPLAX_PLAY_AD_PREVIEW") == "1"
 try:
-    PLAY_ADS = json.loads(os.getenv("SOPLAX_PLAY_ADS", "{}"))
+    PLAY_ADS = json.loads(os.getenv("SOPLAX_PLAY_ADS", json.dumps(DEFAULT_PLAY_ADS)))
 except (ValueError, RecursionError):
     PLAY_ADS = {}
 if not isinstance(PLAY_ADS, dict):
     PLAY_ADS = {}
+try:
+    HOME_ADS = json.loads(os.getenv("SOPLAX_HOME_ADS", json.dumps(DEFAULT_HOME_ADS)))
+except (ValueError, RecursionError):
+    HOME_ADS = {}
+if not isinstance(HOME_ADS, dict):
+    HOME_ADS = {}
 
 SECRET_KEY = required_env("DJANGO_SECRET_KEY")
 if len(SECRET_KEY) < 50 or len(set(SECRET_KEY)) < 5 or SECRET_KEY.startswith("django-insecure-"):

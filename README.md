@@ -60,6 +60,8 @@ python manage.py runserver 127.0.0.1:8000
 
 The development profile uses SQLite, local media files by default and console email. Check the terminal running Django for registration and recovery links. `DJANGO_SQLITE_PATH` can point to a separate SQLite database when validating changes.
 
+Install FFmpeg and make `ffprobe` available on `PATH` to upload or replace videos in local development. The Docker image includes it.
+
 Set `DJANGO_USE_S3=1`, `AWS_STORAGE_BUCKET_NAME`, and `AWS_S3_REGION_NAME` in `.env` to serve videos and thumbnails from S3 during development. If you authenticate with AWS keys, also set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. Temporary credentials also need `AWS_SESSION_TOKEN`.
 
 See [Deploying SoplaX with Docker](DEPLOYMENT.md) for production configuration and how to prepare an existing database for PostgreSQL.

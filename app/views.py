@@ -11,7 +11,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import PasswordResetConfirmView
 from django.core.exceptions import PermissionDenied
 from django.core.files.base import ContentFile
-from django.core.paginator import Paginator
+from django.core.paginator import InvalidPage, Paginator
 from django.db import DatabaseError, IntegrityError, router, transaction
 from django.db.models import Count, F, Q, Sum, Value
 from django.db.models.functions import Replace
@@ -29,6 +29,7 @@ from .account_mail import queue_account_email, send_password_reset_email, send_r
 from .forms import AccountEmailForm, AccountSetPasswordForm, RegistrationForm
 from .middleware import auth_service_unavailable
 from .models import RegistroPendiente, Usuario, Videos
+from .play_ads import AdLayout, get_home_ad_layout, get_play_ad_layout
 from .video_uploads import VideoManagementForm, VideoUploadForm, store_video_uploads, thumbnail_webp_content
 
 
@@ -41,13 +42,24 @@ TITLE_SEARCH_REPLACEMENTS = {
     "\N{COMBINING DIAERESIS}": "",
 }
 TITLE_SEARCH_TRANSLATION = str.maketrans(TITLE_SEARCH_REPLACEMENTS)
+CATALOG_PAGE_SIZE = 24
+
+
+def _catalog_url(page_number=1, query=""):
+    params = {}
+    if query:
+        params["search"] = query
+    if page_number != 1:
+        params["page"] = page_number
+    path = reverse("home")
+    return f"{path}?{urlencode(params)}" if params else path
 
 
 @require_http_methods(["GET", "HEAD", "POST"])
 def index(request):
     if request.method == "POST":
         query = request.POST.get("search", "").strip()[:100]
-        return redirect(f"{reverse('home')}?{urlencode({'search': query})}")
+        return redirect(_catalog_url(query=query))
     query = request.GET.get("search", "").strip()[:100]
     results = Videos.objects.order_by("pk")
     if query:
@@ -59,14 +71,25 @@ def index(request):
             normalized_term = term.translate(TITLE_SEARCH_TRANSLATION) or term
             results = results.filter(searchable_title__icontains=normalized_term)
 
-    page = Paginator(results, 24).get_page(request.GET.get("page"))
+    try:
+        page = Paginator(results, CATALOG_PAGE_SIZE).page(request.GET.get("page", 1))
+    except InvalidPage as exc:
+        raise Http404("Esta página del catálogo no existe.") from exc
+
+    videos = page.object_list
+    ads = AdLayout() if query else get_home_ad_layout(len(videos))
+    request.ad_frame_origins = ads.origins
     return render(
         request,
         "index.html",
         {
-            "videos": page.object_list,
+            "videos": videos,
             "page": page,
             "query": query,
+            "canonical_url": "" if query else f"{settings.PUBLIC_BASE_URL}{_catalog_url(page.number)}",
+            "previous_page_url": _catalog_url(page.previous_page_number(), query) if page.has_previous() else "",
+            "next_page_url": _catalog_url(page.next_page_number(), query) if page.has_next() else "",
+            "ads": ads,
         },
     )
 
@@ -231,7 +254,7 @@ def video_manager_edit(request, video_id):
                 old_assets.append(current_assets["miniatura"])
             with store_video_uploads(video, fields=uploaded_fields):
                 with transaction.atomic(using=using):
-                    video.save(using=using)
+                    video.save(using=using, update_fields=form.video_update_fields() | set(uploaded_fields))
                     form.save_m2m()
         except (DatabaseError, OSError, BotoCoreError, ClientError, ValueError):
             logger.exception("No se pudo actualizar el video %s desde el panel propio.", video_id)
@@ -460,13 +483,17 @@ def play_(request, id, slug=None):
 
     if request.method == "GET":
         Videos.objects.filter(pk=video.pk).update(visitas=F("visitas") + 1)
+    recommended_videos = video_recommendations(video)
+    ads = get_play_ad_layout(len(recommended_videos))
+    request.ad_frame_origins = ads.origins
     return render(
         request,
         "play.html",
         {
             "video": video,
             "canonical_url": f"{settings.PUBLIC_BASE_URL}{canonical_path}",
-            "recommended_videos": video_recommendations(video),
+            "recommended_videos": recommended_videos,
+            "ads": ads,
         },
     )
 

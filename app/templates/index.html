@@ -2,16 +2,27 @@
 {% load static soplax %}
 
 {% block title %}{% if query %}{{ query }} · {% endif %}SoplaX{% endblock %}
-{% block styles %}<link rel="stylesheet" href="{% static 'css/pages/home.css' %}">{% endblock %}
+{% block canonical %}
+{% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}">{% endif %}
+{% if query %}<meta name="robots" content="noindex, follow">{% endif %}
+{% endblock %}
+{% block styles %}
+{% if ads.top_slots or ads.feed_slots %}<link rel="stylesheet" href="{% static 'css/components/ad-slots.css' %}">{% endif %}
+<link rel="stylesheet" href="{% static 'css/pages/home.css' %}">
+{% endblock %}
+
+{% block scripts %}
+{% if ads.top_slots or ads.feed_slots %}<script src="{% static 'js/ad-slots.js' %}" defer></script>{% endif %}
+{% endblock %}
 
 {% block content %}
 {% if not query %}
 <h1 class="visually-hidden">Catálogo de SoplaX</h1>
 {% endif %}
 
-{% if not query and page.number == 1 and page.paginator.count %}
-{% if page.0.miniatura %}{% firstof page.0.miniatura.url as featured_thumbnail %}{% endif %}
-{% with featured=page.0 %}
+{% if not query and page.number == 1 and videos %}
+{% if videos.0.miniatura %}{% firstof videos.0.miniatura.url as featured_thumbnail %}{% endif %}
+{% with featured=videos.0 %}
 <section class="hero" aria-labelledby="hero-title">
   <div class="container hero__inner">
     <div class="hero__content">
@@ -28,12 +39,14 @@
       </div>
     </div>
     <a class="hero__poster{% if not featured_thumbnail %} hero__poster--placeholder{% endif %}"
-       href="{{ featured.get_absolute_url }}" aria-label="Reproducir {{ featured.nombre }}">
+       href="{{ featured.get_absolute_url }}" aria-label="Reproducir {{ featured.nombre }}"
+       {% if featured.duracion_segundos %}aria-describedby="featured-video-duration-{{ featured.pk }}"{% endif %}>
       {% if featured_thumbnail %}
       <img src="{{ featured_thumbnail }}" alt="" width="1280" height="720" fetchpriority="high" decoding="async">
       {% else %}
       <span class="icon-play" aria-hidden="true"></span>
       {% endif %}
+      {% include "partials/video_duration.html" with video=featured placement="featured" only %}
     </a>
   </div>
   {% if featured_thumbnail %}
@@ -41,6 +54,14 @@
   {% endif %}
 </section>
 {% endwith %}
+{% endif %}
+
+{% if ads.top_slots %}
+<section class="container home-top-ads" aria-label="Publicidad superior">
+  {% for slot in ads.top_slots %}
+    {% include "partials/ad_slot.html" with slot=slot only %}
+  {% endfor %}
+</section>
 {% endif %}
 
 <section class="catalog container{% if query %} catalog--results{% endif %}" aria-labelledby="catalog-title">
@@ -53,10 +74,13 @@
     <p class="catalog__count">{{ page.paginator.count }} video{{ page.paginator.count|pluralize }}</p>
   </header>
 
-  {% if page.paginator.count %}
+  {% if videos %}
   <ul class="video-grid" role="list">
-    {% for video in page %}
-    <li>{% include "partials/video_card.html" %}</li>
+    {% for video in videos %}
+      <li>{% include "partials/video_card.html" %}</li>
+      {% if forloop.counter == ads.feed_after %}
+        {% include "partials/feed_ad.html" with slots=ads.feed_slots only %}
+      {% endif %}
     {% endfor %}
   </ul>
   {% else %}

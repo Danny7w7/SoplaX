@@ -1,104 +1,136 @@
 {% extends "base.html" %}
-{% load static soplax play_ads %}
+{% load static soplax %}
 
 {% block title %}{{ video.nombre }} · SoplaX{% endblock %}
 {% block description %}{{ video.descripcion|truncatechars:155 }}{% endblock %}
 {% block canonical %}<link rel="canonical" href="{{ canonical_url }}">{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" href="{% static 'css/components/ad-slots.css' %}">
+{% if ads.watch_banner or ads.watch_sidebar or ads.bottom_slots or ads.feed_slots %}<link rel="stylesheet" href="{% static 'css/components/ad-slots.css' %}">{% endif %}
 <link rel="stylesheet" href="{% static 'css/pages/play.css' %}">
 {% endblock %}
 
 {% block scripts %}
 <script src="{% static 'js/play.js' %}" defer></script>
-<script src="{% static 'js/ad-slots.js' %}" defer></script>
+{% if ads.watch_banner or ads.watch_sidebar or ads.bottom_slots or ads.feed_slots %}<script src="{% static 'js/ad-slots.js' %}" defer></script>{% endif %}
 {% endblock %}
 
 {% block content %}
-{% play_ad_layout as play_ads %}
 {% if video.miniatura %}{% firstof video.miniatura.url as poster_url %}{% endif %}
 
-{% if play_ads.top_desktop %}
-  <section class="play-top-ad ad-device--desktop" aria-label="Publicidad superior">
-    {% include "partials/ad_slot.html" with slot=play_ads.top_desktop only %}
-  </section>
-{% endif %}
-{% if play_ads.top_mobile %}
-  <section class="play-top-ad ad-device--mobile" aria-label="Publicidad superior">
-    {% include "partials/ad_slot.html" with slot=play_ads.top_mobile only %}
+{% if ads.watch_banner %}
+  <section class="container play-top-ad ad-device--desktop" aria-label="Publicidad superior">
+    {% include "partials/ad_slot.html" with slot=ads.watch_banner only %}
   </section>
 {% endif %}
 
-<div class="container play-page">
-  <div class="play-layout{% if play_ads.sidebar %} play-layout--sidebar{% endif %}">
-    <article class="watch" aria-labelledby="video-title">
-      <div class="player">
+<div class="container play-page{% if ads.watch_sidebar %} play-page--sidebar{% endif %}">
+  <article class="watch" aria-labelledby="video-title">
+    <div class="player">
+      <div class="player__frame">
         <video id="my-video" class="player__video" controls controlslist="nodownload" playsinline preload="metadata"
                aria-labelledby="video-title"{% if poster_url %} poster="{{ poster_url }}"{% endif %}>
           <source src="{{ video.video.url }}" type="video/mp4">
           Tu navegador no puede reproducir este video.
         </video>
       </div>
-
-      <header class="watch__header">
-        <h1 class="watch__title" id="video-title">{{ video.nombre }}</h1>
-        <div class="watch__details">
-          <ul class="watch__meta" role="list">
-            <li>{{ video.visitas|vistas }}</li>
-            {% if video.idioma %}<li>{{ video.idioma }}</li>{% endif %}
-          </ul>
-          <a class="button button--sm" href="{% url 'home' %}">
-            <span aria-hidden="true">←</span> Volver al catálogo
-          </a>
+      <div class="player__controls" role="group" aria-label="Controles de video" hidden>
+        <div class="player__timeline">
+          <input class="player__seek" type="range" min="0" max="1000" value="0" aria-label="Posición del video" disabled>
+          <div class="player__preview" aria-hidden="true" hidden>
+            <video class="player__preview-video" muted playsinline preload="none" disablepictureinpicture disableremoteplayback></video>
+            <span data-preview-time></span>
+          </div>
         </div>
-      </header>
+        <div class="player__actions">
+          <button class="player__button" type="button" data-player-play aria-label="Reproducir" title="Reproducir">
+            <span class="icon-play" aria-hidden="true"></span>
+            <span class="player__pause-icon" aria-hidden="true" hidden></span>
+          </button>
+          <span class="player__time" data-player-time>0:00 / 0:00</span>
+          <button class="player__button" type="button" data-player-mute aria-label="Silenciar" title="Silenciar">
+            <span class="player__sound-icon" aria-hidden="true"></span>
+          </button>
+          <input class="player__volume" type="range" min="0" max="1" step="0.05" value="1" aria-label="Volumen">
+          <select class="player__rate" aria-label="Velocidad de reproducción" title="Velocidad de reproducción">
+            <option value="0.25">0.25×</option>
+            <option value="0.5">0.5×</option>
+            <option value="0.75">0.75×</option>
+            <option value="1" selected>1×</option>
+            <option value="1.25">1.25×</option>
+            <option value="1.5">1.5×</option>
+            <option value="1.75">1.75×</option>
+            <option value="2">2×</option>
+          </select>
+          <button class="player__button" type="button" data-player-pip aria-label="Video flotante" title="Video flotante" hidden>
+            <span class="player__pip-icon" aria-hidden="true"></span>
+          </button>
+          <button class="player__button" type="button" data-player-fullscreen aria-label="Pantalla completa" title="Pantalla completa" hidden>
+            <span class="player__fullscreen-icon" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+    </div>
 
-      {% with categorias=video.categorias.all actores=video.actores.all posturas=video.posturas.all %}
-        {% if categorias or actores or posturas %}
-          <dl class="watch__tags">
-            {% if categorias %}
-              <div class="tag-group">
-                <dt>Categorías</dt>
-                <dd><ul class="chips" role="list">{% for item in categorias %}<li class="chip">{{ item }}</li>{% endfor %}</ul></dd>
-              </div>
-            {% endif %}
-            {% if actores %}
-              <div class="tag-group">
-                <dt>Actores</dt>
-                <dd><ul class="chips" role="list">{% for item in actores %}<li class="chip">{{ item }}</li>{% endfor %}</ul></dd>
-              </div>
-            {% endif %}
-            {% if posturas %}
-              <div class="tag-group">
-                <dt>Posturas</dt>
-                <dd><ul class="chips" role="list">{% for item in posturas %}<li class="chip">{{ item }}</li>{% endfor %}</ul></dd>
-              </div>
-            {% endif %}
-          </dl>
-        {% endif %}
-      {% endwith %}
-    </article>
+    <header class="watch__header">
+      <h1 class="watch__title" id="video-title">{{ video.nombre }}</h1>
+      <div class="watch__details">
+        <ul class="watch__meta" role="list">
+          <li>{{ video.visitas|vistas }}</li>
+          {% if video.idioma %}<li>{{ video.idioma }}</li>{% endif %}
+        </ul>
+        <a class="button button--sm" href="{% url 'home' %}">
+          <span aria-hidden="true">←</span> Volver al catálogo
+        </a>
+      </div>
+    </header>
 
-    {% if play_ads.sidebar %}
-      <aside class="play-sidebar ad-device--desktop" aria-label="Publicidad lateral">
-        {% for slot in play_ads.sidebar %}
-          {% include "partials/ad_slot.html" with slot=slot only %}
-        {% endfor %}
-      </aside>
+    {% with categorias=video.categorias.all actores=video.actores.all posturas=video.posturas.all %}
+      {% if categorias or actores or posturas %}
+        <dl class="watch__tags">
+          {% if categorias %}
+            <div class="tag-group">
+              <dt>Categorías</dt>
+              <dd><ul class="chips" role="list">{% for item in categorias %}<li class="chip">{{ item }}</li>{% endfor %}</ul></dd>
+            </div>
+          {% endif %}
+          {% if actores %}
+            <div class="tag-group">
+              <dt>Actores</dt>
+              <dd><ul class="chips" role="list">{% for item in actores %}<li class="chip">{{ item }}</li>{% endfor %}</ul></dd>
+            </div>
+          {% endif %}
+          {% if posturas %}
+            <div class="tag-group">
+              <dt>Posturas</dt>
+              <dd><ul class="chips" role="list">{% for item in posturas %}<li class="chip">{{ item }}</li>{% endfor %}</ul></dd>
+            </div>
+          {% endif %}
+        </dl>
+      {% endif %}
+    {% endwith %}
+
+    {% if video.descripcion %}
+      <section class="watch__description" aria-labelledby="description-title">
+        <h2 class="watch__subtitle" id="description-title">Descripción</h2>
+        <p class="watch__text" id="video-description" data-clamp>{{ video.descripcion|linebreaksbr }}</p>
+        <button class="watch__more" type="button" aria-expanded="false" aria-controls="video-description"
+                data-clamp-toggle hidden>Mostrar más</button>
+      </section>
     {% endif %}
-  </div>
+  </article>
 
-  {% if play_ads.bottom_desktop %}
-    <section class="play-bottom-ads play-bottom-ads--desktop ad-device--desktop" aria-label="Publicidad debajo del video">
-      {% for slot in play_ads.bottom_desktop %}
+  {% if ads.watch_sidebar %}
+    <aside class="play-sidebar ad-device--desktop" aria-label="Publicidad lateral">
+      {% include "partials/ad_slot.html" with slot=ads.watch_sidebar only %}
+    </aside>
+  {% endif %}
+
+  {% if ads.bottom_slots %}
+    <section class="play-bottom-ads" aria-label="Publicidad debajo del video">
+      {% for slot in ads.bottom_slots %}
         {% include "partials/ad_slot.html" with slot=slot only %}
       {% endfor %}
-    </section>
-  {% endif %}
-  {% if play_ads.bottom_mobile %}
-    <section class="play-bottom-ads ad-device--mobile" aria-label="Publicidad debajo del video">
-      {% include "partials/ad_slot.html" with slot=play_ads.bottom_mobile only %}
     </section>
   {% endif %}
 
@@ -110,24 +142,11 @@
       <ul class="video-grid" role="list">
         {% for recommended in recommended_videos %}
           <li>{% include "partials/video_card.html" with video=recommended lazy_thumbnail=True only %}</li>
-          {% for slot in play_ads.feed %}
-            {% if slot.after_card == forloop.parentloop.counter %}
-              <li class="play-recommended__ad ad-device--{{ slot.device }}{% if slot.format != 'native' %} play-recommended__ad--rectangle{% endif %}">
-                {% include "partials/ad_slot.html" with slot=slot only %}
-              </li>
-            {% endif %}
-          {% endfor %}
+          {% if forloop.counter == ads.feed_after %}
+            {% include "partials/feed_ad.html" with slots=ads.feed_slots only %}
+          {% endif %}
         {% endfor %}
       </ul>
-    </section>
-  {% endif %}
-
-  {% if video.descripcion %}
-    <section class="watch__description" aria-labelledby="description-title">
-      <h2 class="watch__subtitle" id="description-title">Descripción</h2>
-      <p class="watch__text" id="video-description" data-clamp>{{ video.descripcion|linebreaksbr }}</p>
-      <button class="watch__more" type="button" aria-expanded="false" aria-controls="video-description"
-              data-clamp-toggle hidden>Mostrar más</button>
     </section>
   {% endif %}
 </div>

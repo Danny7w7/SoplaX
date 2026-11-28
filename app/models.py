@@ -71,6 +71,7 @@ class Videos(models.Model):
     es_premium = models.BooleanField(default=True, verbose_name="contenido premium")
     miniatura = models.FileField(upload_to=miniatura_upload_to)
     video = models.FileField(upload_to='upload/videos')
+    duracion_segundos = models.PositiveIntegerField(null=True, blank=True, editable=False)
     visitas = models.IntegerField()
     categorias = models.ManyToManyField(Categoria, blank=True, related_name="videos", verbose_name="categorías")
     actores = models.ManyToManyField(Actor, blank=True, related_name="videos")

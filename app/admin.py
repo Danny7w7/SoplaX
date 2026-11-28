@@ -13,7 +13,7 @@ from django.utils.html import format_html
 from django.views.decorators.http import require_http_methods
 
 from .models import Actor, Categoria, Idioma, Postura, Usuario, Videos
-from .video_uploads import VideoUploadForm, store_video_uploads
+from .video_uploads import VideoFileForm, VideoUploadForm, store_video_uploads
 
 
 logger = logging.getLogger(__name__)
@@ -53,6 +53,7 @@ class CatalogoVideoAdmin(admin.ModelAdmin):
 
 @admin.register(Videos)
 class VideosAdmin(admin.ModelAdmin):
+    form = VideoFileForm
     list_display = ("nombre", "es_premium", "idioma", "visitas")
     list_filter = ("es_premium", "categorias", "idioma", "posturas")
     search_fields = (
@@ -70,6 +71,12 @@ class VideosAdmin(admin.ModelAdmin):
         if obj is not None:
             readonly_fields.append("es_premium")
         return readonly_fields
+
+    def save_model(self, request, obj, form, change):
+        if change:
+            obj.save(update_fields=form.video_update_fields())
+        else:
+            super().save_model(request, obj, form, change)
 
     @method_decorator(require_http_methods(["GET", "HEAD", "POST"]))
     def add_view(self, request, form_url="", extra_context=None):
