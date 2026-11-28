@@ -10,6 +10,8 @@
 {% endif %}
 {% endblock %}
 
+{% block userlinks %}<a href="{% url 'studio_dashboard' %}">SoplaX Studio</a> / {{ block.super }}{% endblock %}
+
 {% block responsive %}
 {{ block.super }}
 <link rel="stylesheet" href="{% static 'css/tokens.css' %}">

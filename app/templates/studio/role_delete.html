@@ -1,0 +1,11 @@
+{% extends "studio/base.html" %}
+
+{% block studio_title %}Eliminar rol{% endblock %}
+
+{% block studio_content %}
+{% url 'studio_roles' as back_url %}
+<a class="back-link" href="{{ back_url }}"><span aria-hidden="true">←</span> Roles y permisos</a>
+{% with title="¿Eliminar el rol «"|add:role.name|add:"»?" %}
+{% include "studio/partials/confirm.html" with title=title message=message back_url=back_url keep_label="Conservar rol" submit_label="Eliminar rol" only %}
+{% endwith %}
+{% endblock %}

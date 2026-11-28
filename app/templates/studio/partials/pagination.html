@@ -1,0 +1,11 @@
+{% if page.has_other_pages %}
+<nav class="pagination studio-pagination" aria-label="{{ label|default:'Paginación' }}">
+  {% if page.has_previous %}
+  <a class="button button--secondary button--sm" href="{% querystring page=page.previous_page_number %}">Anterior</a>
+  {% endif %}
+  <span class="pagination__status">Página <strong>{{ page.number }}</strong> de {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}
+  <a class="button button--secondary button--sm" href="{% querystring page=page.next_page_number %}">Siguiente</a>
+  {% endif %}
+</nav>
+{% endif %}

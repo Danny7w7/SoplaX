@@ -1,0 +1,89 @@
+{% extends "studio/base.html" %}
+{% load studio %}
+
+{% block studio_title %}Usuarios{% endblock %}
+
+{% block studio_content %}
+<header class="studio-head">
+  <div class="studio-head__copy">
+    <p class="eyebrow">Acceso</p>
+    <h1 class="studio-head__title">Usuarios</h1>
+    <p class="studio-head__lead">Cuentas registradas, acceso al panel y roles del equipo.</p>
+  </div>
+  <div class="studio-head__actions">
+    <a class="button button--primary" href="{% url 'studio_user_add' %}">{% studio_icon "plus" %}Nuevo usuario</a>
+  </div>
+</header>
+
+<section class="studio-section" aria-labelledby="users-title">
+  <h2 class="visually-hidden" id="users-title">Listado de usuarios</h2>
+  <div class="studio-toolbar">
+    <form class="studio-search" method="get" role="search">
+      <label class="visually-hidden" for="user-search">Buscar usuarios</label>
+      {% studio_icon "search" %}
+      <input class="input" id="user-search" type="search" name="q" value="{{ query }}" maxlength="100"
+             placeholder="Nombre o correo">
+      {% if active_filter != "todos" %}<input type="hidden" name="filtro" value="{{ active_filter }}">{% endif %}
+      {% if query %}<a class="button button--ghost button--sm" href="{% querystring q=None page=None %}">Limpiar</a>{% endif %}
+      <button class="button button--secondary button--sm" type="submit">Buscar</button>
+    </form>
+    <div class="studio-segmented" role="group" aria-label="Filtrar usuarios">
+      {% for key, label in filters %}
+      <a class="studio-segmented__item" href="{% if key == 'todos' %}{% querystring filtro=None page=None %}{% else %}{% querystring filtro=key page=None %}{% endif %}"{% if key == active_filter %} aria-current="true"{% endif %}>{{ label }}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if users %}
+  <table class="studio-table">
+    <thead>
+      <tr>
+        <th scope="col">Usuario</th>
+        <th scope="col">Acceso</th>
+        <th scope="col">Último ingreso</th>
+        <th scope="col" class="studio-table__actions"><span class="visually-hidden">Acciones</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for account in users %}
+      {% with display_name=account.get_full_name|default:account.email|default:account.username %}
+      <tr>
+        <th scope="row" class="studio-table__primary">
+          <span class="studio-person">
+            <span class="avatar" aria-hidden="true">{{ display_name|first|upper }}</span>
+            <span class="studio-person__copy">
+              <span class="studio-person__name">{{ display_name }}{% if account.pk == user.pk %} <span class="studio-person__you">(tú)</span>{% endif %}</span>
+              {% if account.email and account.email != display_name %}<span class="studio-person__email">{{ account.email }}</span>{% endif %}
+            </span>
+          </span>
+        </th>
+        <td data-label="Acceso">
+          <span class="studio-badges">
+            {% if not account.is_active %}<span class="studio-badge studio-badge--danger">Inactiva</span>{% endif %}
+            {% if account.is_superuser %}<span class="studio-badge studio-badge--accent">Superusuario</span>
+            {% elif account.is_staff %}<span class="studio-badge">Equipo</span>
+            {% else %}<span class="studio-badge studio-badge--muted">Usuario</span>{% endif %}
+            {% for role in account.groups.all %}<span class="studio-badge studio-badge--muted">{{ role.name }}</span>{% endfor %}
+          </span>
+        </td>
+        <td data-label="Último ingreso" class="studio-table__muted">
+          {% if account.last_login %}<time datetime="{{ account.last_login|date:'c' }}">{{ account.last_login|date:"d/m/Y" }}</time>{% else %}Nunca{% endif %}
+        </td>
+        <td class="studio-table__actions">
+          <a class="button button--ghost button--sm" href="{% url 'studio_user_edit' account.pk %}">{% studio_icon "edit" %}Editar</a>
+        </td>
+      </tr>
+      {% endwith %}
+      {% endfor %}
+    </tbody>
+  </table>
+  {% include "studio/partials/pagination.html" with label="Paginación de usuarios" %}
+  {% else %}
+  <div class="empty-state">
+    <span class="x-glyph x-glyph--lg" aria-hidden="true"></span>
+    <h3 class="empty-state__title">Sin resultados</h3>
+    <p>Prueba con otra búsqueda o filtro.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

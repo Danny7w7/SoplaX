@@ -1,0 +1,54 @@
+{% extends "studio/base.html" %}
+{% load studio %}
+
+{% block studio_title %}{% if account %}Editar usuario{% else %}Nuevo usuario{% endif %}{% endblock %}
+
+{% block studio_content %}
+<header class="studio-head">
+  <div class="studio-head__copy">
+    <a class="back-link" href="{% url 'studio_users' %}"><span aria-hidden="true">←</span> Usuarios</a>
+    <h1 class="studio-head__title">{% if account %}{{ account.get_full_name|default:account.email|default:"Editar usuario" }}{% else %}Nuevo usuario{% endif %}</h1>
+    <p class="studio-head__lead">
+      {% if account %}Registrado el {{ account.date_joined|date:"d/m/Y" }}{% if account.last_login %} · último ingreso el {{ account.last_login|date:"d/m/Y" }}{% endif %}.{% else %}La persona iniciará sesión con su correo y esta contraseña.{% endif %}
+    </p>
+  </div>
+  {% if account %}
+  <div class="studio-head__actions">
+    <a class="button button--secondary" href="{% url 'studio_user_password' account.pk %}">{% studio_icon "key" %}Cambiar contraseña</a>
+  </div>
+  {% endif %}
+</header>
+
+<form class="studio-form form" method="post" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="form-alert" role="alert">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+  {% endif %}
+  <div class="studio-form__grid">
+    <section class="studio-card" aria-labelledby="profile-title">
+      <h2 class="studio-card__title" id="profile-title">Datos de la cuenta</h2>
+      <div class="studio-form__pair">
+        {% include "studio/partials/field.html" with field=form.first_name only %}
+        {% include "studio/partials/field.html" with field=form.last_name only %}
+      </div>
+      {% include "studio/partials/field.html" with field=form.email only %}
+      {% if not account %}
+      {% include "studio/partials/field.html" with field=form.password1 only %}
+      {% include "studio/partials/field.html" with field=form.password2 only %}
+      {% endif %}
+    </section>
+
+    <section class="studio-card" aria-labelledby="access-title">
+      <h2 class="studio-card__title" id="access-title">Acceso</h2>
+      {% if account %}{% include "studio/partials/field.html" with field=form.is_active only %}{% endif %}
+      {% include "studio/partials/field.html" with field=form.is_staff only %}
+      {% if account %}{% include "studio/partials/field.html" with field=form.is_superuser only %}{% endif %}
+      {% include "studio/partials/field.html" with field=form.groups empty_text="Aún no hay roles. Créalos en Roles y permisos." only %}
+    </section>
+  </div>
+  <div class="studio-form__actions">
+    <a class="button button--ghost" href="{% url 'studio_users' %}">Cancelar</a>
+    <button class="button button--primary" type="submit">{% if account %}Guardar cambios{% else %}Crear usuario{% endif %}</button>
+  </div>
+</form>
+{% endblock %}

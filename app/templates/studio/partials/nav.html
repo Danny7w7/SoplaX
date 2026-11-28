@@ -1,0 +1,24 @@
+{% load studio %}
+<nav class="studio-nav" aria-label="Secciones del panel">
+  {% for group in groups %}
+  <div class="studio-nav__group">
+    <p class="studio-nav__label">{{ group.label }}</p>
+    <ul class="studio-nav__list" role="list">
+      {% for key, label, url, icon in group.items %}
+      <li>
+        <a class="studio-nav__link" href="{{ url }}"{% if key == active %} aria-current="page"{% endif %}>
+          {% studio_icon icon %}<span>{{ label }}</span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+  {% if user.is_superuser %}
+  <div class="studio-nav__group studio-nav__group--footer">
+    <a class="studio-nav__link studio-nav__link--quiet" href="{% url 'admin:index' %}">
+      {% studio_icon "external" %}<span>Administración avanzada</span>
+    </a>
+  </div>
+  {% endif %}
+</nav>

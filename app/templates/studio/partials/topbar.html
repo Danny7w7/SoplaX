@@ -1,0 +1,26 @@
+{% load studio %}
+<header class="studio-topbar">
+  <div class="studio-topbar__inner">
+    <a class="studio-topbar__brand" href="{% url 'studio_dashboard' %}" aria-label="SoplaX Studio, ir al resumen">
+      <span class="brand" aria-hidden="true">Sopla<span class="brand__x">X</span></span>
+      <span class="studio-topbar__product" aria-hidden="true">Studio</span>
+    </a>
+    <div class="studio-topbar__actions">
+      <a class="button button--ghost button--sm" href="{% url 'home' %}">
+        {% studio_icon "external" %}<span class="studio-topbar__label">Ver sitio</span>
+      </a>
+      {% with display_name=user.get_short_name|default:user.email|default:user.username %}
+      <span class="studio-topbar__user">
+        <span class="avatar" aria-hidden="true">{{ display_name|first|upper }}</span>
+        <span class="studio-topbar__name">{{ display_name }}</span>
+      </span>
+      {% endwith %}
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button class="button button--ghost button--sm" type="submit" aria-label="Cerrar sesión" title="Cerrar sesión">
+          {% studio_icon "logout" %}<span class="studio-topbar__label">Salir</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</header>

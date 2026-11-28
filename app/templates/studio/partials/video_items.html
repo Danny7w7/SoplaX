@@ -1,0 +1,18 @@
+{% load soplax %}
+{% if videos %}
+<ol class="studio-videos" role="list">
+  {% for video in videos %}
+  <li class="studio-videos__item">
+    <span class="studio-videos__thumb">
+      {% if video.miniatura %}<img src="{{ video.miniatura.url }}" alt="" loading="lazy">{% endif %}
+    </span>
+    <span class="studio-videos__copy">
+      <a class="studio-videos__name" href="{% if edit %}{% url 'video_manager_edit' video.pk %}{% else %}{{ video.get_absolute_url }}{% endif %}">{{ video.nombre }}</a>
+      <span class="studio-videos__meta">{% if show_visits %}{{ video.visitas|vistas }}{% elif edit %}Editar clasificación{% else %}Ver video{% endif %}</span>
+    </span>
+  </li>
+  {% endfor %}
+</ol>
+{% else %}
+<p class="studio-card__empty">{{ empty }}</p>
+{% endif %}

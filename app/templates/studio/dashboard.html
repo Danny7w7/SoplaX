@@ -1,0 +1,69 @@
+{% extends "studio/base.html" %}
+{% load studio soplax %}
+
+{% block studio_title %}Resumen{% endblock %}
+
+{% block studio_content %}
+<header class="studio-head">
+  <div class="studio-head__copy">
+    <p class="eyebrow"><span class="x-glyph" aria-hidden="true"></span>SoplaX Studio</p>
+    <h1 class="studio-head__title">Hola{% if user.first_name %}, {{ user.first_name }}{% endif %}</h1>
+    <p class="studio-head__lead">Así está el catálogo hoy.</p>
+  </div>
+</header>
+
+{% if stats %}
+<section class="studio-stats" aria-label="Métricas del catálogo">
+  {% for stat in stats %}
+  <a class="studio-stat" href="{{ stat.url }}">
+    <span class="studio-stat__label">{{ stat.label }}</span>
+    <strong class="studio-stat__value">{{ stat.value|miles }}</strong>
+    {% if stat.hint %}<span class="studio-stat__hint">{{ stat.hint }}</span>{% endif %}
+  </a>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if actions %}
+<section class="studio-section" aria-labelledby="quick-title">
+  <h2 class="studio-section__title" id="quick-title">Accesos rápidos</h2>
+  <div class="studio-quick">
+    {% for action in actions %}
+    <a class="button {% if action.primary %}button--primary{% else %}button--secondary{% endif %}" href="{{ action.url }}">
+      {% studio_icon "plus" %}{{ action.label }}
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if can_view_videos %}
+<div class="studio-columns">
+  <section class="studio-card" aria-labelledby="top-title">
+    <header class="studio-card__head">
+      <h2 class="studio-card__title" id="top-title">Más vistos</h2>
+      <a class="studio-card__link" href="{% url 'video_manager' %}">Ver todos</a>
+    </header>
+    {% include "studio/partials/video_items.html" with videos=top_videos show_visits=True empty="Aún no hay videos publicados." %}
+  </section>
+
+  <section class="studio-card" aria-labelledby="unclassified-title">
+    <header class="studio-card__head">
+      <h2 class="studio-card__title" id="unclassified-title">Sin categoría</h2>
+      {% if unclassified_total %}<span class="studio-badge studio-badge--warning">{{ unclassified_total|miles }}</span>{% endif %}
+    </header>
+    {% include "studio/partials/video_items.html" with videos=unclassified_videos edit=can_change_videos empty="Todos los videos tienen al menos una categoría." %}
+    {% if missing_duration %}
+    <p class="studio-card__note">{% studio_icon "alert" %}{{ missing_duration|miles }} video{{ missing_duration|pluralize }} sin duración. Ejecuta <code>completar_duraciones_videos</code> para calcularla.</p>
+    {% endif %}
+  </section>
+
+  <section class="studio-card" aria-labelledby="recent-title">
+    <header class="studio-card__head">
+      <h2 class="studio-card__title" id="recent-title">Agregados recientemente</h2>
+    </header>
+    {% include "studio/partials/video_items.html" with videos=recent_videos edit=can_change_videos empty="Aún no hay videos publicados." %}
+  </section>
+</div>
+{% endif %}
+{% endblock %}
